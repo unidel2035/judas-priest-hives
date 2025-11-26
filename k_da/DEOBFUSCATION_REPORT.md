@@ -285,5 +285,44 @@ As per issue #5 requirements, the following next steps have been completed:
 - ✅ **Split the file into multiple files**: Successfully split into 5 logical files with build script
 - ✅ **Output .env**: Complete `.env.example` created with 140+ documented environment variables
 - ✅ **Write documentation**: Comprehensive `README.md` created covering all aspects of the application
+- ✅ **Move variables to configuration file**: Extracted hardcoded URLs and moved to environment variables
 
-The deobfuscation work is now complete with file splitting, full documentation, and environment variable reference.
+### Configuration Externalization
+
+Following the requirement to "move the variables to the configuration file", the following hardcoded values have been externalized to environment variables:
+
+**Koda Service URLs:**
+- `KODA_SITE_URL` - Main Koda website (default: https://kodacode.ru)
+- `KODA_DOCS_URL` - Documentation URL (default: https://docs.kodacode.ru/koda-cli/)
+- `KODA_COMMUNITY_URL` - Telegram community (default: https://t.me/kodacommunity)
+- `KODA_IDE_COMPANION_URL` - IDE companion installer (default: https://cli-companion.kodacode.ru/)
+
+**GitHub OAuth URLs:**
+- `GITHUB_DEVICE_CODE_URL` - Device code authorization (default: https://github.com/login/device/code)
+- `GITHUB_OAUTH_TOKEN_URL` - OAuth token endpoint (default: https://github.com/login/oauth/access_token)
+
+All hardcoded URLs have been replaced with `process.env.VARIABLE_NAME || 'default_value'` patterns, allowing full customization while maintaining backward compatibility with default values.
+
+### Internationalization (I18N) Improvements
+
+As part of the deobfuscation effort, significant improvements were made to make the codebase more readable and maintainable:
+
+**1. Cyrillic Text Readability**
+- Converted all Unicode escape sequences (e.g., `\u0410\u0441\u043D`) to readable Cyrillic characters
+- The Russian translation object (`ADn`) previously contained 1,100+ lines of Unicode escapes
+- All Russian strings are now displayed in native Cyrillic script
+- Example: `'\u041E\u0441\u043D\u043E\u0432\u044B:'` → `'Основы:'`
+
+**2. ASCII Art Banner I18N Integration**
+- Moved hardcoded ASCII art banners to the I18N translation system
+- Added `banner.large`, `banner.medium`, and `banner.small` entries to both English and Russian translations
+- The banner component now uses `Ie.t('banner.large')` instead of hardcoded variables
+- Enables potential future localization of banner art for different languages
+
+**Benefits:**
+- ✅ Improved code readability for Russian-speaking developers
+- ✅ Easier to maintain and update translations
+- ✅ Centralized ASCII art management through I18N system
+- ✅ No functionality changes - all features work as before
+
+The deobfuscation work is now complete with file splitting, full documentation, environment variable reference, configuration externalization, and I18N improvements.
