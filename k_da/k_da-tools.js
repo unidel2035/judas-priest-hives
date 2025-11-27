@@ -14,15 +14,15 @@
  *   node k_da-tools.js all [options]
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
 
 // =============================================================================
 // UTILITIES
 // =============================================================================
 
-function log(message, prefix = '•') {
+function log(message, prefix = "•") {
   console.log(`${prefix} ${message}`);
 }
 
@@ -35,24 +35,24 @@ function error(message) {
 }
 
 function section(title) {
-  console.log('\n' + '='.repeat(80));
+  console.log("\n" + "=".repeat(80));
   console.log(title);
-  console.log('='.repeat(80) + '\n');
+  console.log("=".repeat(80) + "\n");
 }
 
 function fileSize(bytes) {
-  return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  return (bytes / 1024 / 1024).toFixed(2) + " MB";
 }
 
 // =============================================================================
 // STEP 1: DEOBFUSCATION
 // =============================================================================
 
-async function deobfuscate(inputFile = 'original.js') {
-  section('STEP 1: DEOBFUSCATION');
+async function deobfuscate(inputFile = "original.js") {
+  section("STEP 1: DEOBFUSCATION");
 
   const inputPath = path.join(__dirname, inputFile);
-  const outputPath = path.join(__dirname, 'k_da_deobfuscated.js');
+  const outputPath = path.join(__dirname, "k_da_deobfuscated.js");
 
   if (!fs.existsSync(inputPath)) {
     error(`Input file not found: ${inputPath}`);
@@ -60,26 +60,26 @@ async function deobfuscate(inputFile = 'original.js') {
   }
 
   log(`Reading: ${inputFile}`);
-  const content = fs.readFileSync(inputPath, 'utf8');
+  const content = fs.readFileSync(inputPath, "utf8");
   const inputSize = content.length;
 
   log(`Size: ${fileSize(inputSize)}`);
-  log(`Lines: ${content.split('\n').length.toLocaleString()}`);
+  log(`Lines: ${content.split("\n").length.toLocaleString()}`);
 
   // Apply prettier formatting
-  log('Applying prettier formatting...');
-  const prettier = require('prettier');
+  log("Applying prettier formatting...");
+  const prettier = require("prettier");
   const formatted = await prettier.format(content, {
-    parser: 'babel',
+    parser: "babel",
     printWidth: 100,
     tabWidth: 2,
     semi: true,
     singleQuote: true,
-    trailingComma: 'es5',
-    arrowParens: 'always',
+    trailingComma: "es5",
+    arrowParens: "always",
   });
 
-  fs.writeFileSync(outputPath, formatted, 'utf8');
+  fs.writeFileSync(outputPath, formatted, "utf8");
   success(`Deobfuscated file written: ${outputPath}`);
   success(`Output size: ${fileSize(formatted.length)}`);
 
@@ -91,22 +91,22 @@ async function deobfuscate(inputFile = 'original.js') {
 // =============================================================================
 
 function splitFile() {
-  section('STEP 2: SPLIT INTO SOURCE FILES');
+  section("STEP 2: SPLIT INTO SOURCE FILES");
 
-  const filePath = path.join(__dirname, 'k_da_deobfuscated.js');
+  const filePath = path.join(__dirname, "k_da_deobfuscated.js");
 
   if (!fs.existsSync(filePath)) {
-    error('k_da_deobfuscated.js not found. Run deobfuscate first.');
+    error("k_da_deobfuscated.js not found. Run deobfuscate first.");
     process.exit(1);
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
-  const lines = content.split('\n');
+  const content = fs.readFileSync(filePath, "utf8");
+  const lines = content.split("\n");
 
   log(`Total lines: ${lines.length.toLocaleString()}`);
 
   // Create directory structure
-  const srcDir = path.join(__dirname, 'src');
+  const srcDir = path.join(__dirname, "src");
   if (fs.existsSync(srcDir)) {
     fs.rmSync(srcDir, { recursive: true, force: true });
   }
@@ -115,35 +115,35 @@ function splitFile() {
   // Define split boundaries
   const splits = [
     {
-      filename: 'src/01-webpack-runtime.js',
+      filename: "src/01-webpack-runtime.js",
       start: 5,
       end: 39,
-      description: 'Webpack module system and runtime utilities',
+      description: "Webpack module system and runtime utilities",
     },
     {
-      filename: 'src/02-react-bundle.js',
+      filename: "src/02-react-bundle.js",
       start: 39,
       end: 20500,
-      description: 'React library bundle (v19.1.0)',
+      description: "React library bundle (v19.1.0)",
     },
     {
-      filename: 'src/03-npm-modules.js',
+      filename: "src/03-npm-modules.js",
       start: 20500,
       end: 242191,
-      description: 'Bundled npm packages and dependencies',
+      description: "Bundled npm packages and dependencies",
     },
     {
-      filename: 'src/04-app-code.js',
+      filename: "src/04-app-code.js",
       start: 242191,
       end: 278185,
-      description: 'Application code, helpers, and configuration',
+      description: "Application code, helpers, and configuration",
     },
     {
-      filename: 'src/05-main.js',
+      filename: "src/05-main.js",
       start: 278185,
       end: lines.length,
-      description: 'Main entry function and bootstrap',
-    }
+      description: "Main entry function and bootstrap",
+    },
   ];
 
   // Extract each section
@@ -151,7 +151,7 @@ function splitFile() {
     log(`[${index + 1}/${splits.length}] Creating ${split.filename}...`);
 
     const sectionLines = lines.slice(split.start, split.end);
-    const sectionContent = sectionLines.join('\n');
+    const sectionContent = sectionLines.join("\n");
 
     const outputPath = path.join(__dirname, split.filename);
 
@@ -164,10 +164,12 @@ function splitFile() {
     fs.writeFileSync(outputPath, fileContent);
 
     const sizeMB = (fileContent.length / 1024 / 1024).toFixed(2);
-    success(`${split.filename.split('/')[1]} - ${sectionLines.length.toLocaleString()} lines, ${sizeMB} MB`);
+    success(
+      `${split.filename.split("/")[1]} - ${sectionLines.length.toLocaleString()} lines, ${sizeMB} MB`,
+    );
   });
 
-  success('Source files split successfully');
+  success("Source files split successfully");
 }
 
 // =============================================================================
@@ -175,36 +177,38 @@ function splitFile() {
 // =============================================================================
 
 function extractI18n() {
-  section('STEP 3: EXTRACT LOCALIZATION FILES');
+  section("STEP 3: EXTRACT LOCALIZATION FILES");
 
-  const appCodeFile = path.join(__dirname, 'src/04-app-code.js');
+  const appCodeFile = path.join(__dirname, "src/04-app-code.js");
 
   if (!fs.existsSync(appCodeFile)) {
-    error('src/04-app-code.js not found. Run split first.');
+    error("src/04-app-code.js not found. Run split first.");
     process.exit(1);
   }
 
-  const content = fs.readFileSync(appCodeFile, 'utf8');
-  const lines = content.split('\n');
+  const content = fs.readFileSync(appCodeFile, "utf8");
+  const lines = content.split("\n");
 
   // Create directories
-  const i18nDir = path.join(__dirname, 'src/i18n');
-  const localesDir = path.join(i18nDir, 'locales');
-  const assetsDir = path.join(i18nDir, 'assets');
+  const i18nDir = path.join(__dirname, "src/i18n");
+  const localesDir = path.join(i18nDir, "locales");
+  const assetsDir = path.join(i18nDir, "assets");
 
-  [i18nDir, localesDir, assetsDir].forEach(dir => {
+  [i18nDir, localesDir, assetsDir].forEach((dir) => {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   });
 
   // Find i18n objects in the code
-  log('Searching for i18n objects...');
+  log("Searching for i18n objects...");
 
   // Find English i18n (var hDn = {)
-  const enStartIndex = lines.findIndex(line => line.trim().startsWith('var hDn = {'));
+  const enStartIndex = lines.findIndex((line) =>
+    line.trim().startsWith("var hDn = {"),
+  );
   if (enStartIndex === -1) {
-    error('Could not find English i18n object (var hDn = {)');
+    error("Could not find English i18n object (var hDn = {)");
     process.exit(1);
   }
 
@@ -222,15 +226,20 @@ function extractI18n() {
   }
 
   const enLines = lines.slice(enStartIndex, enEndIndex + 1);
-  const enContent = enLines.join('\n').replace(/^var hDn = /, 'export const enUS = ').replace(/;$/, '');
+  const enContent = enLines
+    .join("\n")
+    .replace(/^var hDn = /, "export const enUS = ")
+    .replace(/;$/, "");
 
-  fs.writeFileSync(path.join(localesDir, 'en-US.js'), enContent);
-  success('English locale extracted: src/i18n/locales/en-US.js');
+  fs.writeFileSync(path.join(localesDir, "en-US.js"), enContent);
+  success("English locale extracted: src/i18n/locales/en-US.js");
 
   // Find Russian i18n (ADn = {)
-  const ruStartIndex = lines.findIndex(line => line.trim().startsWith('ADn = {'));
+  const ruStartIndex = lines.findIndex((line) =>
+    line.trim().startsWith("ADn = {"),
+  );
   if (ruStartIndex === -1) {
-    error('Could not find Russian i18n object (ADn = {)');
+    error("Could not find Russian i18n object (ADn = {)");
     process.exit(1);
   }
 
@@ -248,37 +257,62 @@ function extractI18n() {
   }
 
   const ruLines = lines.slice(ruStartIndex, ruEndIndex + 1);
-  const ruContent = ruLines.join('\n').replace(/^\s*ADn = /, 'export const ruRU = ').replace(/;$/, '');
+  const ruContent = ruLines
+    .join("\n")
+    .replace(/^\s*ADn = /, "export const ruRU = ")
+    .replace(/;$/, "");
 
-  fs.writeFileSync(path.join(localesDir, 'ru-RU.js'), ruContent);
-  success('Russian locale extracted: src/i18n/locales/ru-RU.js');
+  fs.writeFileSync(path.join(localesDir, "ru-RU.js"), ruContent);
+  success("Russian locale extracted: src/i18n/locales/ru-RU.js");
 
   // Extract banners from English locale
-  log('Extracting ASCII banners...');
-  const enFile = fs.readFileSync(path.join(localesDir, 'en-US.js'), 'utf8');
+  log("Extracting ASCII banners...");
+  const enFile = fs.readFileSync(path.join(localesDir, "en-US.js"), "utf8");
 
   // Extract large banner
   const largeBannerMatch = enFile.match(/large:\s*`([^`]+)`/s);
   if (largeBannerMatch) {
-    fs.writeFileSync(path.join(assetsDir, 'banner-large.txt'), largeBannerMatch[1].trim());
-    success('Large banner extracted: src/i18n/assets/banner-large.txt');
+    fs.writeFileSync(
+      path.join(assetsDir, "banner-large.txt"),
+      largeBannerMatch[1].trim(),
+    );
+    success("Large banner extracted: src/i18n/assets/banner-large.txt");
   }
 
   // Extract medium banner
   const mediumBannerMatch = enFile.match(/medium:\s*`([^`]+)`/s);
   if (mediumBannerMatch) {
-    fs.writeFileSync(path.join(assetsDir, 'banner-medium.txt'), mediumBannerMatch[1].trim());
-    success('Medium banner extracted: src/i18n/assets/banner-medium.txt');
+    fs.writeFileSync(
+      path.join(assetsDir, "banner-medium.txt"),
+      mediumBannerMatch[1].trim(),
+    );
+    success("Medium banner extracted: src/i18n/assets/banner-medium.txt");
   }
 
   // Extract small banner
   const smallBannerMatch = enFile.match(/small:\s*`([^`]+)`/s);
   if (smallBannerMatch) {
-    fs.writeFileSync(path.join(assetsDir, 'banner-small.txt'), smallBannerMatch[1].trim());
-    success('Small banner extracted: src/i18n/assets/banner-small.txt');
+    fs.writeFileSync(
+      path.join(assetsDir, "banner-small.txt"),
+      smallBannerMatch[1].trim(),
+    );
+    success("Small banner extracted: src/i18n/assets/banner-small.txt");
   }
 
-  success('Localization files extracted successfully');
+  // Конвертируем Unicode в нормальную кириллицу
+  log("Converting Unicode to Cyrillic...");
+  const locales = ["en-US.js", "ru-RU.js"];
+  locales.forEach((locale) => {
+    const filePath = path.join(localesDir, locale);
+    let content = fs.readFileSync(filePath, "utf8");
+    content = content.replace(/\\u([0-9a-fA-F]{4})/g, (_, code) =>
+      String.fromCharCode(parseInt(code, 16)),
+    );
+    fs.writeFileSync(filePath, content, "utf8");
+    success(`Unicode fixed: ${locale}`);
+  });
+
+  success("Localization files extracted successfully");
 }
 
 // =============================================================================
@@ -286,20 +320,20 @@ function extractI18n() {
 // =============================================================================
 
 function extractStrings() {
-  section('STEP 4: EXTRACT STRINGS AND URLS');
+  section("STEP 4: EXTRACT STRINGS AND URLS");
 
-  const appCodeFile = path.join(__dirname, 'src/04-app-code.js');
+  const appCodeFile = path.join(__dirname, "src/04-app-code.js");
 
   if (!fs.existsSync(appCodeFile)) {
-    error('src/04-app-code.js not found. Run split first.');
+    error("src/04-app-code.js not found. Run split first.");
     process.exit(1);
   }
 
-  let content = fs.readFileSync(appCodeFile, 'utf8');
+  let content = fs.readFileSync(appCodeFile, "utf8");
   const originalSize = content.length;
 
   // Convert Unicode escape sequences
-  log('Converting Unicode escape sequences...');
+  log("Converting Unicode escape sequences...");
   const unicodePattern = /\\u([0-9a-fA-F]{4})/g;
   let unicodeCount = 0;
   content = content.replace(unicodePattern, (match, code) => {
@@ -308,32 +342,34 @@ function extractStrings() {
   });
 
   if (unicodeCount > 0) {
-    fs.writeFileSync(appCodeFile, content, 'utf8');
-    success(`Converted ${unicodeCount.toLocaleString()} Unicode escape sequences`);
+    fs.writeFileSync(appCodeFile, content, "utf8");
+    success(
+      `Converted ${unicodeCount.toLocaleString()} Unicode escape sequences`,
+    );
   } else {
-    log('No Unicode escape sequences found');
+    log("No Unicode escape sequences found");
   }
 
   // Extract URLs
-  log('Extracting URLs...');
+  log("Extracting URLs...");
   const httpsUrls = [];
   const httpsPattern = /(https:\/\/[^\s'"`,)]+)/g;
   let match;
   while ((match = httpsPattern.exec(content)) !== null) {
-    const url = match[1].replace(/[.,;)]$/, '');
+    const url = match[1].replace(/[.,;)]$/, "");
     if (!httpsUrls.includes(url)) {
       httpsUrls.push(url);
     }
   }
 
   log(`Found ${httpsUrls.length} unique HTTPS URLs`);
-  httpsUrls.slice(0, 5).forEach(url => log(`  - ${url}`, '  '));
+  httpsUrls.slice(0, 5).forEach((url) => log(`  - ${url}`, "  "));
   if (httpsUrls.length > 5) {
-    log(`  ... and ${httpsUrls.length - 5} more`, '  ');
+    log(`  ... and ${httpsUrls.length - 5} more`, "  ");
   }
 
   // Extract environment variables
-  log('Extracting environment variables...');
+  log("Extracting environment variables...");
   const envVars = new Set();
   const envPattern = /process\.env\.([A-Z_][A-Z0-9_]*)/g;
   while ((match = envPattern.exec(content)) !== null) {
@@ -343,7 +379,7 @@ function extractStrings() {
   log(`Found ${envVars.size} unique environment variables`);
 
   // Generate report
-  const reportPath = path.join(__dirname, 'STRING_EXTRACTION_REPORT.md');
+  const reportPath = path.join(__dirname, "STRING_EXTRACTION_REPORT.md");
   const report = `# K_DA String Extraction Report
 
 Generated: ${new Date().toISOString()}
@@ -356,11 +392,14 @@ Generated: ${new Date().toISOString()}
 
 ## URLs
 
-${httpsUrls.map((url, i) => `${i + 1}. \`${url}\``).join('\n')}
+${httpsUrls.map((url, i) => `${i + 1}. \`${url}\``).join("\n")}
 
 ## Environment Variables
 
-${Array.from(envVars).sort().map((envVar, i) => `${i + 1}. \`${envVar}\``).join('\n')}
+${Array.from(envVars)
+  .sort()
+  .map((envVar, i) => `${i + 1}. \`${envVar}\``)
+  .join("\n")}
 
 ## Recommendations
 
@@ -376,7 +415,7 @@ ${Array.from(envVars).sort().map((envVar, i) => `${i + 1}. \`${envVar}\``).join(
   fs.writeFileSync(reportPath, report);
   success(`Report written: ${reportPath}`);
 
-  success('String extraction complete');
+  success("String extraction complete");
 }
 
 // =============================================================================
@@ -384,28 +423,28 @@ ${Array.from(envVars).sort().map((envVar, i) => `${i + 1}. \`${envVar}\``).join(
 // =============================================================================
 
 function configure(options = {}) {
-  section('STEP 5: CONFIGURE ENVIRONMENT');
+  section("STEP 5: CONFIGURE ENVIRONMENT");
 
   const {
-    appName = 'K_DA CLI',
-    companyName = 'Koda',
+    appName = "K_DA CLI",
+    companyName = "Koda",
     disableTelemetry = true,
     disableTracking = true,
   } = options;
 
   log(`Application Name: ${appName}`);
   log(`Company Name: ${companyName}`);
-  log(`Disable Telemetry: ${disableTelemetry ? 'Yes' : 'No'}`);
-  log(`Disable Tracking: ${disableTracking ? 'Yes' : 'No'}`);
+  log(`Disable Telemetry: ${disableTelemetry ? "Yes" : "No"}`);
+  log(`Disable Tracking: ${disableTracking ? "Yes" : "No"}`);
 
   // Create .env file
-  const envPath = path.join(__dirname, '.env');
-  const envExamplePath = path.join(__dirname, '.env.example');
+  const envPath = path.join(__dirname, ".env");
+  const envExamplePath = path.join(__dirname, ".env.example");
 
-  let envContent = '';
+  let envContent = "";
 
   if (fs.existsSync(envExamplePath)) {
-    envContent = fs.readFileSync(envExamplePath, 'utf8');
+    envContent = fs.readFileSync(envExamplePath, "utf8");
   }
 
   // Add custom configuration
@@ -430,14 +469,14 @@ function configure(options = {}) {
   success(`.env file created: ${envPath}`);
 
   // Customize branding if requested
-  if (appName !== 'K_DA CLI' || companyName !== 'Koda') {
-    log('Customizing branding...');
+  if (appName !== "K_DA CLI" || companyName !== "Koda") {
+    log("Customizing branding...");
 
-    const localesDir = path.join(__dirname, 'src/i18n/locales');
-    const enUSPath = path.join(localesDir, 'en-US.js');
+    const localesDir = path.join(__dirname, "src/i18n/locales");
+    const enUSPath = path.join(localesDir, "en-US.js");
 
     if (fs.existsSync(enUSPath)) {
-      let content = fs.readFileSync(enUSPath, 'utf8');
+      let content = fs.readFileSync(enUSPath, "utf8");
 
       // Replace Koda CLI with custom app name
       content = content.replace(/Koda CLI/g, appName);
@@ -449,7 +488,7 @@ function configure(options = {}) {
     }
   }
 
-  success('Configuration complete');
+  success("Configuration complete");
 }
 
 // =============================================================================
@@ -457,27 +496,27 @@ function configure(options = {}) {
 // =============================================================================
 
 function build() {
-  section('STEP 6: BUILD k_da.js');
+  section("STEP 6: BUILD k_da.js");
 
-  const buildScript = path.join(__dirname, 'build.js');
+  const buildScript = path.join(__dirname, "build.js");
 
   if (!fs.existsSync(buildScript)) {
-    error('build.js not found');
+    error("build.js not found");
     process.exit(1);
   }
 
-  log('Running build script...');
+  log("Running build script...");
 
   try {
     execSync(`node ${buildScript}`, {
       cwd: __dirname,
-      stdio: 'inherit',
+      stdio: "inherit",
     });
 
-    success('Build completed successfully');
+    success("Build completed successfully");
 
     // Check output
-    const outputPath = path.join(__dirname, 'k_da.js');
+    const outputPath = path.join(__dirname, "k_da.js");
     if (fs.existsSync(outputPath)) {
       const stats = fs.statSync(outputPath);
       success(`Output file: ${outputPath} (${fileSize(stats.size)})`);
@@ -493,9 +532,9 @@ function build() {
 // =============================================================================
 
 async function runAll(options = {}) {
-  console.log('\n' + '█'.repeat(80));
-  console.log('K_DA TOOLS - Complete Workflow');
-  console.log('█'.repeat(80));
+  console.log("\n" + "█".repeat(80));
+  console.log("K_DA TOOLS - Complete Workflow");
+  console.log("█".repeat(80));
 
   try {
     // Step 1: Deobfuscate
@@ -517,17 +556,16 @@ async function runAll(options = {}) {
     build();
 
     // Summary
-    section('COMPLETE!');
-    success('All steps completed successfully');
-    console.log('\nGenerated files:');
-    console.log('  • k_da_deobfuscated.js - Deobfuscated source');
-    console.log('  • src/ - Split source files');
-    console.log('  • src/i18n/ - Localization files');
-    console.log('  • .env - Configuration file');
-    console.log('  • k_da.js - Built executable');
-    console.log('  • STRING_EXTRACTION_REPORT.md - Extraction report');
-    console.log('\nTo run: node k_da.js --help\n');
-
+    section("COMPLETE!");
+    success("All steps completed successfully");
+    console.log("\nGenerated files:");
+    console.log("  • k_da_deobfuscated.js - Deobfuscated source");
+    console.log("  • src/ - Split source files");
+    console.log("  • src/i18n/ - Localization files");
+    console.log("  • .env - Configuration file");
+    console.log("  • k_da.js - Built executable");
+    console.log("  • STRING_EXTRACTION_REPORT.md - Extraction report");
+    console.log("\nTo run: node k_da.js --help\n");
   } catch (err) {
     error(`Workflow failed: ${err.message}`);
     console.error(err);
@@ -547,11 +585,11 @@ async function main() {
   const options = {};
   for (let i = 1; i < args.length; i++) {
     const arg = args[i];
-    if (arg.startsWith('--')) {
+    if (arg.startsWith("--")) {
       const key = arg.slice(2);
       const value = args[i + 1];
 
-      if (value && !value.startsWith('--')) {
+      if (value && !value.startsWith("--")) {
         options[key] = value;
         i++;
       } else {
@@ -561,7 +599,12 @@ async function main() {
   }
 
   // Show help
-  if (!command || command === 'help' || command === '--help' || command === '-h') {
+  if (
+    !command ||
+    command === "help" ||
+    command === "--help" ||
+    command === "-h"
+  ) {
     console.log(`
 K_DA Tools - Integrated deobfuscation and build configuration tool
 
@@ -614,31 +657,31 @@ For more information, see the documentation in k_da/ directory.
 
   // Execute command
   switch (command) {
-    case 'deobfuscate':
-      await deobfuscate(options.input || 'original.js');
+    case "deobfuscate":
+      await deobfuscate(options.input || "original.js");
       break;
 
-    case 'split':
+    case "split":
       splitFile();
       break;
 
-    case 'extract-i18n':
+    case "extract-i18n":
       extractI18n();
       break;
 
-    case 'extract-strings':
+    case "extract-strings":
       extractStrings();
       break;
 
-    case 'configure':
+    case "configure":
       configure(options);
       break;
 
-    case 'build':
+    case "build":
       build();
       break;
 
-    case 'all':
+    case "all":
       await runAll(options);
       break;
 
@@ -651,7 +694,7 @@ For more information, see the documentation in k_da/ directory.
 
 // Run CLI
 if (require.main === module) {
-  main().catch(err => {
+  main().catch((err) => {
     error(`Fatal error: ${err.message}`);
     console.error(err);
     process.exit(1);
