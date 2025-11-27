@@ -1,0 +1,262 @@
+================================================================================
+Koda Branding Analysis for k_da
+================================================================================
+
+📊 Analyzing files...
+
+================================================================================
+ANALYSIS RESULTS
+================================================================================
+
+
+================================================================================
+Service URLs (configurable) - ✅ SAFE TO CUSTOMIZE
+Total: 44 occurrences
+================================================================================
+
+1. src/03-npm-modules.js:65213
+   ((_Pr = 'https://telemetry.kodacode.ru/log'),
+
+2. src/03-npm-modules.js:127649
+   let n = e.apiBase || process.env.KODA_API_BASE || 'https://api.kodacode.ru/v1';
+
+3. src/03-npm-modules.js:190152
+   let r = process.env.KODA_WEB_SEARCH_BASE_URL || 'https://api.kodacode.ru/web_search',
+
+4. src/03-npm-modules.js:196695
+   let e = process.env.KODA_API_BASE || 'https://api.kodacode.ru/v1';
+
+5. src/04-app-code.js:7164
+   ⚡ Configure permanent access with /auth or visit https://kodacode.ru .`,
+
+   ... and 39 more occurrences
+
+
+================================================================================
+Environment Variables - ✅ SAFE TO CUSTOMIZE
+Total: 573 occurrences
+================================================================================
+
+1. src/03-npm-modules.js:63550
+   ((t[(t.KODA_CLI_KEY_UNKNOWN = 0)] = 'KODA_CLI_KEY_UNKNOWN'),
+
+2. src/03-npm-modules.js:63551
+   (t[(t.KODA_CLI_START_SESSION_MODEL = 1)] = 'KODA_CLI_START_SESSION_MODEL'),
+
+3. src/03-npm-modules.js:63552
+   (t[(t.KODA_CLI_START_SESSION_EMBEDDING_MODEL = 2)] =
+
+4. src/03-npm-modules.js:63553
+   'KODA_CLI_START_SESSION_EMBEDDING_MODEL'),
+
+5. src/03-npm-modules.js:63554
+   (t[(t.KODA_CLI_START_SESSION_SANDBOX = 3)] = 'KODA_CLI_START_SESSION_SANDBOX'),
+
+   ... and 568 more occurrences
+
+
+================================================================================
+UI Text/Messages - ✅ SAFE TO CUSTOMIZE
+Total: 393 occurrences
+================================================================================
+
+1. src/03-npm-modules.js:14081
+   ((af = 'KodaAgent'), (rd = 'KodaChat'), (vN = 'KodaChat'));
+
+2. src/03-npm-modules.js:16469
+   ((f1 = 'koda-cli'),
+
+3. src/03-npm-modules.js:16470
+   (Tnt = 'koda_cli.user_prompt'),
+
+4. src/03-npm-modules.js:16471
+   (oH = 'koda_cli.tool_call'),
+
+5. src/03-npm-modules.js:16472
+   (xnt = 'koda_cli.api_request'),
+
+   ... and 388 more occurrences
+
+
+================================================================================
+Technical Identifiers - ⚠️  CAUTION REQUIRED
+Total: 13 occurrences
+================================================================================
+
+1. src/03-npm-modules.js:65135
+   let i = xPr(n.koda_cli_key),
+
+2. src/03-npm-modules.js:192922
+   let { respectGitIgnore: n = !0, respectKodaIgnore: i = !0 } = r;
+
+3. src/03-npm-modules.js:204592
+   (delete t.kodaApiKey, await K0e(t));
+
+4. src/04-app-code.js:5948
+   let S = m.git.length + m.koda.length + m.both.length;
+
+5. k_da.js:85631
+   let i = xPr(n.koda_cli_key),
+
+   ... and 8 more occurrences
+
+
+================================================================================
+Comments/Documentation - ✅ SAFE TO CUSTOMIZE
+Total: 3 occurrences
+================================================================================
+
+1. src/04-app-code.js:382
+   'data:application/octet-stream;base64,AGFzbQEAAAABugM3YAF/AGACf38AYAF/AX9gA39/fwBgAn98AGACf38Bf2ADf3...
+
+2. k_da.js:242571
+   'data:application/octet-stream;base64,AGFzbQEAAAABugM3YAF/AGACf38AYAF/AX9gA39/fwBgAn98AGACf38Bf2ADf3...
+
+3. k_da_deobfuscated.js:242571
+   'data:application/octet-stream;base64,AGFzbQEAAAABugM3YAF/AGACf38AYAF/AX9gA39/fwBgAn98AGACf38Bf2ADf3...
+
+
+================================================================================
+Uncategorized - ⚠️  CAUTION REQUIRED
+Total: 216 occurrences
+================================================================================
+
+1. src/03-npm-modules.js:65418
+   r.push({ koda_cli_key: s, value: JSON.stringify(e.metadata[a]) });
+
+2. src/03-npm-modules.js:127673
+   typeof i.kodaApiKey == 'string' &&
+
+3. src/03-npm-modules.js:127674
+   i.kodaApiKey &&
+
+4. src/03-npm-modules.js:127675
+   ((this.apiKey = i.kodaApiKey),
+
+5. src/03-npm-modules.js:147468
+   respectKodaIgnore:
+
+   ... and 211 more occurrences
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+Total "Koda" references found: 1242
+
+
+📍 Unique URLs found:
+   • https://telemetry.kodacode.ru/log
+   • https://api.kodacode.ru/v1
+   • https://api.kodacode.ru/web_search
+   • https://kodacode.ru
+   • https://t.me/kodacommunity`;
+   • https://t.me/kodacommunity
+   • https://docs.kodacode.ru/koda-cli/
+   • https://cli-companion.kodacode.ru/
+   • https://api.kodacode.ru
+   • https://api.kodacode.ru)
+   • https://kodacode.ru)
+   • https://docs.kodacode.ru/koda-cli/)
+   • https://t.me/kodacommunity)
+   • https://cli-companion.kodacode.ru/)
+   • https://auth.koda.example.com/github/exchange
+
+🔧 Unique Environment Variables:
+   • KODA_CLI_KEY_UNKNOWN
+   • KODA_CLI_START_SESSION_MODEL
+   • KODA_CLI_START_SESSION_EMBEDDING_MODEL
+   • KODA_CLI_START_SESSION_SANDBOX
+   • KODA_CLI_START_SESSION_CORE_TOOLS
+   • KODA_CLI_START_SESSION_APPROVAL_MODE
+   • KODA_CLI_START_SESSION_API_KEY_ENABLED
+   • KODA_CLI_START_SESSION_VERTEX_API_ENABLED
+   • KODA_CLI_START_SESSION_DEBUG_MODE_ENABLED
+   • KODA_CLI_START_SESSION_MCP_SERVERS
+   • KODA_CLI_START_SESSION_TELEMETRY_ENABLED
+   • KODA_CLI_START_SESSION_TELEMETRY_LOG_USER_PROMPTS_ENABLED
+   • KODA_CLI_START_SESSION_RESPECT_GITIGNORE
+   • KODA_CLI_USER_PROMPT_LENGTH
+   • KODA_CLI_TOOL_CALL_NAME
+   • KODA_CLI_TOOL_CALL_DECISION
+   • KODA_CLI_TOOL_CALL_SUCCESS
+   • KODA_CLI_TOOL_CALL_DURATION_MS
+   • KODA_CLI_TOOL_ERROR_MESSAGE
+   • KODA_CLI_TOOL_CALL_ERROR_TYPE
+   • KODA_CLI_API_REQUEST_MODEL
+   • KODA_CLI_API_RESPONSE_MODEL
+   • KODA_CLI_API_RESPONSE_STATUS_CODE
+   • KODA_CLI_API_RESPONSE_DURATION_MS
+   • KODA_CLI_API_ERROR_MESSAGE
+   • KODA_CLI_API_RESPONSE_INPUT_TOKEN_COUNT
+   • KODA_CLI_API_RESPONSE_OUTPUT_TOKEN_COUNT
+   • KODA_CLI_API_RESPONSE_CACHED_TOKEN_COUNT
+   • KODA_CLI_API_RESPONSE_THINKING_TOKEN_COUNT
+   • KODA_CLI_API_RESPONSE_TOOL_TOKEN_COUNT
+   • KODA_CLI_API_ERROR_MODEL
+   • KODA_CLI_API_ERROR_TYPE
+   • KODA_CLI_API_ERROR_STATUS_CODE
+   • KODA_CLI_API_ERROR_DURATION_MS
+   • KODA_CLI_END_SESSION_ID
+   • KODA_CLI_PROMPT_ID
+   • KODA_CLI_AUTH_TYPE
+   • KODA_CLI_GOOGLE_ACCOUNTS_COUNT
+   • KODA_CLI_SURFACE
+   • KODA_CLI_SESSION_ID
+   • KODA_CLI_VERSION
+   • KODA_CLI_GIT_COMMIT_HASH
+   • KODA_CLI_LOOP_DETECTED_TYPE
+   • KODA_CLI_SLASH_COMMAND_NAME
+   • KODA_CLI_SLASH_COMMAND_SUBCOMMAND
+   • KODA_CLI_SLASH_COMMAND_STATUS
+   • KODA_CLI_RESPONSE_FINISH_REASON
+   • KODA_CLI_NEXT_SPEAKER_CHECK_RESULT
+   • KODA_CLI_MALFORMED_JSON_RESPONSE_MODEL
+   • KODA_CLI_IDE_CONNECTION_TYPE
+   • KODA_CLI_AI_ADDED_LINES
+   • KODA_CLI_AI_REMOVED_LINES
+   • KODA_CLI_USER_ADDED_LINES
+   • KODA_CLI_USER_REMOVED_LINES
+   • KODA_CLI_KITTY_TRUNCATED_SEQUENCE
+   • KODA_CLI_KITTY_SEQUENCE_LENGTH
+   • KODA_CLI_
+   • KODA_CLI
+   • KODA_API_KEY
+   • KODA_GITHUB_TOKEN
+   • KODA_FORCE_AUTH
+   • KODA_CLI_IDE_WORKSPACE_PATH
+   • KODA_CLI_IDE_SERVER_PORT
+   • KODA_WEB_SEARCH_LANGUAGE
+   • KODA_WEB_SEARCH_LOCATION
+   • KODA_RESPONSE_LANGUAGE
+   • KODA_CONFIG_DIR
+   • KODA_GITHUB_EXCHANGE_URL
+   • KODA_CLI_NO_RELAUNCH
+   • KODA_WEB_SEARCH_BASE_URL
+   • KODA_API_BASE
+
+================================================================================
+RECOMMENDATIONS
+================================================================================
+
+✅ SAFE TO CUSTOMIZE:
+   • UI text and messages (update i18n files)
+   • Service URLs (configure via environment variables)
+   • Environment variable names (with corresponding code updates)
+   • Comments and documentation
+
+⚠️  REQUIRES CAREFUL REVIEW:
+   • Technical identifiers (variable names, function names)
+   • These may be referenced in multiple places
+   • Changing them could break functionality
+
+🔒 DO NOT CHANGE:
+   • GitHub OAuth endpoints (github.com/login/...)
+   • External API endpoints that expect specific authentication
+   • Hardcoded references tied to external services
+
+================================================================================
+💡 To customize branding, see: BRANDING_CUSTOMIZATION_GUIDE.md
+================================================================================
+
