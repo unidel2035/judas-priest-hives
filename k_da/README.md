@@ -111,6 +111,7 @@ node k_da.js [options]
 ## Table of Contents
 
 - [File Structure](#file-structure)
+- [Polza AI Integration](#polza-ai-integration) ⭐ **NEW**
 - [Features](#features)
 - [Architecture](#architecture)
 - [Installation](#installation)
@@ -125,6 +126,81 @@ node k_da.js [options]
 - [File Split Strategy](#file-split-strategy)
 - [Internationalization](#internationalization)
 - [Troubleshooting](#troubleshooting)
+
+## Polza AI Integration
+
+K_DA includes **automatic Polza AI integration** during builds! When you set `POLZA_API_KEY` in your `.env` file, the build process automatically includes a fully-functional Polza AI client in the compiled output.
+
+### Quick Setup
+
+```bash
+# 1. Add your Polza AI API key to .env
+echo 'POLZA_API_KEY=ak_your_api_key_here' >> .env
+
+# 2. Build (Polza AI client is auto-included!)
+node build.js
+
+# 3. Build output confirms integration:
+#    ✓ Polza AI integration included in build
+```
+
+### What You Get
+
+- ✅ **Zero Configuration**: Client is ready to use immediately after build
+- ✅ **Multiple AI Models**: Access OpenAI, Anthropic, Google, DeepSeek via one API
+- ✅ **Cost Efficient**: Billing in Russian Rubles with detailed cost tracking
+- ✅ **OpenAI Compatible**: Drop-in replacement for OpenAI SDK
+- ✅ **Advanced Features**: Streaming, reasoning tokens, function calling, vision
+
+### Available Models
+
+| Provider | Model ID | Description |
+|----------|----------|-------------|
+| Anthropic | `anthropic/claude-sonnet-4.5` | Latest Claude Sonnet (recommended) |
+| OpenAI | `openai/gpt-4o` | GPT-4 Optimized |
+| OpenAI | `openai/o1-preview` | O1 with reasoning |
+| DeepSeek | `deepseek/deepseek-r1` | DeepSeek R1 with reasoning |
+| Google | `google/gemini-pro` | Google Gemini Pro |
+
+### Usage Example
+
+```javascript
+const { polzaAI } = require('./k_da.js');
+
+// Initialize (uses .env configuration automatically)
+const client = polzaAI.init();
+
+// Simple completion
+const response = await polzaAI.complete('Explain quantum computing');
+console.log(response);
+
+// Chat with history
+const chatResponse = await polzaAI.chat([
+  { role: 'system', content: 'You are a helpful assistant.' },
+  { role: 'user', content: 'How do I reverse a string in Python?' }
+]);
+console.log(chatResponse.choices[0].message.content);
+```
+
+### Testing
+
+```bash
+# Run comprehensive test suite
+cd experiments
+node test-polza-integration.mjs
+
+# Run usage examples
+node example-polza-usage.js
+```
+
+### Full Documentation
+
+For complete documentation, examples, and troubleshooting:
+- **📖 [POLZA_BUILD_INTEGRATION.md](../POLZA_BUILD_INTEGRATION.md)** - User guide (quick start, usage examples, troubleshooting)
+- **🔧 [POLZA_AI_INTEGRATION_GUIDE.md](POLZA_AI_INTEGRATION_GUIDE.md)** - Technical guide (architecture, implementation details)
+- **📄 [polza.txt](../polza.txt)** - Full Polza AI API documentation
+
+> **Get Your API Key**: Visit [polza.ai](https://polza.ai) to create an account and get your free API key.
 
 ## Features
 
