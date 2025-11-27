@@ -85,6 +85,151 @@ const ruRUObject = ruRUFile
   .replace(/},\s*$/, '};') // Fix trailing comma (should be semicolon)
   .trim();
 
+// Check if Polza AI integration should be included
+const polzaApiKey = envVars.POLZA_API_KEY;
+const shouldIncludePolza = !!polzaApiKey;
+
+if (shouldIncludePolza) {
+  console.log('   → Polza AI integration detected - including client');
+} else {
+  console.log('   → Polza AI integration not detected - skipping');
+}
+
+// Create Polza AI client code for inline inclusion
+const polzaClientCode = `
+// === Polza AI Client Integration ===
+// Generated during build process
+
+class PolzaAIClient {
+  constructor(config = {}) {
+    this.apiKey = config.apiKey || process.env.POLZA_API_KEY;
+    this.baseUrl = config.baseUrl || process.env.POLZA_API_BASE || 'https://api.polza.ai/api/v1';
+    this.defaultModel = config.model || process.env.POLZA_DEFAULT_MODEL || 'anthropic/claude-sonnet-4.5';
+    this.temperature = parseFloat(config.temperature || process.env.POLZA_TEMPERATURE || '0.7');
+    this.maxTokens = parseInt(config.maxTokens || process.env.POLZA_MAX_TOKENS || '4096');
+    this.enableStreaming = config.enableStreaming !== false;
+    this.enableReasoning = config.enableReasoning === true;
+    this.reasoningEffort = config.reasoningEffort || process.env.POLZA_REASONING_EFFORT || 'high';
+
+    if (!this.apiKey) {
+      throw new Error('Polza AI API key not provided. Set POLZA_API_KEY environment variable.');
+    }
+  }
+
+  async createChatCompletion(messages, options = {}) {
+    const url = this.baseUrl + '/chat/completions';
+
+    const requestBody = {
+      model: options.model || this.defaultModel,
+      messages: messages,
+      temperature: options.temperature ?? this.temperature,
+      max_tokens: options.maxTokens ?? this.maxTokens,
+      stream: options.stream ?? false,
+      ...(options.tools && { tools: options.tools }),
+      ...(options.toolChoice && { tool_choice: options.toolChoice }),
+      ...(this.enableReasoning && {
+        reasoning: {
+          effort: options.reasoningEffort || this.reasoningEffort,
+          max_tokens: options.reasoningMaxTokens || 2000
+        }
+      })
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + this.apiKey,
+          'Content-Type': 'application/json',
+          ...(options.stream && { 'Accept': 'text/event-stream' })
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(
+          'Polza AI API Error (' + response.status + '): ' + (error.error?.message || response.statusText)
+        );
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Polza AI Request failed:', error.message);
+      throw error;
+    }
+  }
+
+  async listModels() {
+    const url = this.baseUrl + '/models';
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': 'Bearer ' + this.apiKey
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch models: ' + response.statusText);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('Polza AI Models request failed:', error.message);
+      throw error;
+    }
+  }
+
+  // Convenience method for simple completions
+  async complete(prompt, options = {}) {
+    const messages = [{ role: 'user', content: prompt }];
+    const response = await this.createChatCompletion(messages, options);
+    return response.choices?.[0]?.message?.content || '';
+  }
+}
+
+// Polza AI integration helper
+const polzaAI = {
+  client: null,
+  
+  init(config = {}) {
+    if (!this.client) {
+      try {
+        this.client = new PolzaAIClient(config);
+        console.log('✅ Polza AI client initialized');
+      } catch (error) {
+        console.warn('⚠️ Polza AI initialization failed:', error.message);
+      }
+    }
+    return this.client;
+  },
+  
+  isAvailable() {
+    return !!this.client;
+  },
+  
+  async complete(prompt, options = {}) {
+    if (!this.client) {
+      throw new Error('Polza AI client not initialized');
+    }
+    return this.client.complete(prompt, options);
+  },
+  
+  async chat(messages, options = {}) {
+    if (!this.client) {
+      throw new Error('Polza AI client not initialized');
+    }
+    return this.client.createChatCompletion(messages, options);
+  }
+};
+
+// Export for use in CLI
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { PolzaAIClient, polzaAI };
+}
+`;
+
 // Helper function to inline environment variables
 function inlineEnvironmentVariables(content) {
   if (!envFileLoaded) return content;
@@ -174,7 +319,22 @@ ${enUSObject}
 ${ruRUObject}
 
 `;
-    content = content.slice(0, i18nCommentIndex) + i18nInline + content.slice(i18nCommentIndex);
+
+    // Prepare inline content
+    let inlineContent = i18nInline;
+
+    // Add Polza AI integration if API key is present
+    if (shouldIncludePolza) {
+      const polzaInline = `// === Polza AI Integration ===
+// Auto-included during build because POLZA_API_KEY is set
+${polzaClientCode}
+
+`;
+      inlineContent += polzaInline;
+      console.log('   → Polza AI client code inlined successfully');
+    }
+
+    content = content.slice(0, i18nCommentIndex) + inlineContent + content.slice(i18nCommentIndex);
 
     // Remove old hard-coded i18n objects from the app code
     // This prevents duplicate i18n data and ensures changes to locale files are applied
@@ -306,5 +466,10 @@ console.log(`\n✓ Built ${outputPath} (${sizeMB} MB)`);
 console.log('✓ i18n locale data inlined successfully');
 if (envFileLoaded) {
   console.log(`✓ Environment variables from .env ${inlineEnv ? 'inlined' : 'set as defaults'}`);
+}
+if (shouldIncludePolza) {
+  console.log('✓ Polza AI integration included in build');
+} else {
+  console.log('ℹ️  Polza AI integration not included (no API key found)');
 }
 console.log('\nTo run: ./k_da/k_da.js or bun k_da/k_da.js');
