@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const prettier = require('prettier');
 
-const INPUT_FILE = path.join(__dirname, '..', 'k_da', 'k_da.js');
+const INPUT_FILE = path.join(__dirname, '..', 'k_da', 'original.js');
 const OUTPUT_FILE = path.join(__dirname, '..', 'k_da', 'k_da_deobfuscated.js');
 
 async function deobfuscate() {

@@ -19,8 +19,7 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-console.log('🧪 Testing Polza AI Integration in Built k_da.js
-');
+console.log('🧪 Testing Polza AI Integration in Built k_da.js');
 
 // Check if .env exists and has POLZA_API_KEY
 const envPath = path.join(__dirname, '.env');

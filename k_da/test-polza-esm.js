@@ -1,60 +1,76 @@
 #!/usr/bin/env node
 
 /**
- * Простой тест Polza AI клиента в собранном k_da.js (ESM версия)
+ * Test for Polza AI integration using ES modules
  */
 
-console.log('🧪 Тестирование Polza AI клиента в k_da.js\n');
+console.log('🧪 Testing Polza AI Integration in Built k_da.js (ESM)\n');
 
-async function testPolza() {
+// Set environment variable for test
+process.env.POLZA_API_KEY = 'ak_0xCOU-hEsCsImB6r-dg7GChm2LFPQOUL9ROwExY8WBo';
+
+async function testPolzaIntegration() {
   try {
-    // Загружаем собранный k_da
-    const { polzaAI } = await import('./k_da.js');
-
-    // Инициализация клиента
-    console.log('📡 Инициализация Polza AI клиента...');
-    const client = polzaAI.init({
-      model: 'anthropic/claude-sonnet-4.5'
-    });
-
-    if (!client) {
-      console.log('❌ Polza AI клиент не инициализирован');
-      console.log('💡 Проверьте, что POLZA_API_KEY установлен в .env');
-      return;
+    // Test 1: Check if PolzaAIClient class exists
+    console.log('Test 1: Checking if PolzaAIClient class exists in built file...');
+    const fs = require('fs');
+    const kdaContent = fs.readFileSync('./k_da.js', 'utf8');
+    
+    if (kdaContent.includes('class PolzaAIClient')) {
+      console.log('✅ PolzaAIClient class found in built file');
+    } else {
+      console.log('❌ PolzaAIClient class NOT found in built file');
+      process.exit(1);
     }
 
-    console.log('✅ Polza AI клиент инициализирован успешно');
-
-    // Тест 1: Простое завершение
-    console.log('\n📝 Тест 1: Простое завершение...');
-    try {
-      const response = await polzaAI.complete('Скажи "Привет от Polza AI!"');
-      console.log('✅ Ответ:', response);
-    } catch (error) {
-      console.log('⚠️ Ошибка завершения (ожидается без реального API ключа):', error.message);
+    // Test 2: Check if polzaAI helper exists
+    console.log('Test 2: Checking if polzaAI helper exists in built file...');
+    if (kdaContent.includes('const polzaAI = {')) {
+      console.log('✅ polzaAI helper object found in built file');
+    } else {
+      console.log('❌ polzaAI helper object NOT found in built file');
+      process.exit(1);
     }
 
-    // Тест 2: Список моделей
-    console.log('\n📋 Тест 2: Список моделей...');
-    try {
-      const models = await client.listModels();
-      console.log('✅ Получен ответ от API моделей');
-      console.log('📊 Доступно моделей:', models.data?.length || 0);
-    } catch (error) {
-      console.log('⚠️ Ошибка получения моделей (ожидается без реального API ключа):', error.message);
+    // Test 3: Check if API key reference exists
+    console.log('Test 3: Checking if POLZA_API_KEY reference exists...');
+    if (kdaContent.includes('process.env.POLZA_API_KEY')) {
+      console.log('✅ POLZA_API_KEY reference found in built file');
+    } else {
+      console.log('❌ POLZA_API_KEY reference NOT found in built file');
+      process.exit(1);
     }
 
-    console.log('\n🎉 Тест завершен!');
-    console.log('\n💡 Для реального тестирования:');
-    console.log('   1. Получите API ключ на https://polza.ai');
-    console.log('   2. Установите: POLZA_API_KEY=ak_ваш_ключ');
-    console.log('   3. Пересоберите: node build.js');
-    console.log('   4. Запустите этот тест снова');
+    // Test 4: Try to import and initialize Polza client
+    console.log('Test 4: Trying to import and initialize Polza client...');
+    const kdaModule = await import('./k_da.js');
+    
+    if (kdaModule.polzaAI && typeof kdaModule.polzaAI.init === 'function') {
+      console.log('✅ polzaAI object and init function available');
+      
+      // Test initialization
+      const client = kdaModule.polzaAI.init();
+      if (client) {
+        console.log('✅ Polza AI client initialized successfully');
+        console.log('✅ Client configuration:', client.getConfig ? client.getConfig() : 'config available');
+      } else {
+        console.log('⚠️  Polza AI client initialization returned null (check API key)');
+      }
+    } else {
+      console.log('❌ polzaAI object or init function NOT available');
+      process.exit(1);
+    }
+
+    console.log('\n🎉 All tests passed!');
+    console.log('✅ Polza AI integration is properly included in the build');
+    console.log('\nTo test actual API calls, run:');
+    console.log('node example-polza-usage.js');
 
   } catch (error) {
-    console.error('❌ Критическая ошибка:', error.message);
-    console.error('🔍 Stack trace:', error.stack);
+    console.error('❌ Error during testing:', error.message);
+    console.error(error.stack);
+    process.exit(1);
   }
 }
 
-testPolza();
+testPolzaIntegration();

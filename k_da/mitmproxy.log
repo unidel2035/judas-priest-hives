@@ -1,0 +1,38 @@
+Error: mitmproxy's console interface requires a tty. Please run mitmproxy in an interactive shell environment.
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/site-packages/mitmproxy/master.py", line 84, in run
+    await self.running()
+  File "/usr/lib/python3.13/site-packages/mitmproxy/tools/console/master.py", line 210, in running
+    sys.exit(1)
+    ~~~~~~~~^^^
+SystemExit: 1
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/bin/mitmproxy", line 8, in <module>
+    sys.exit(mitmproxy())
+             ~~~~~~~~~^^
+  File "/usr/lib/python3.13/site-packages/mitmproxy/tools/main.py", line 144, in mitmproxy
+    run(console.master.ConsoleMaster, cmdline.mitmproxy, args)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/site-packages/mitmproxy/tools/main.py", line 138, in run
+    return asyncio.run(main())
+           ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/site-packages/mitmproxy/tools/main.py", line 135, in main
+    await master.run()
+  File "/usr/lib/python3.13/site-packages/mitmproxy/master.py", line 94, in run
+    await self.done()
+  File "/usr/lib/python3.13/site-packages/mitmproxy/tools/console/master.py", line 250, in done
+    self.loop.stop()
+    ^^^^^^^^^
+AttributeError: 'ConsoleMaster' object has no attribute 'loop'
