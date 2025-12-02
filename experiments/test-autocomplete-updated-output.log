@@ -1,0 +1,34 @@
+(node:669628) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///tmp/gh-issue-solver-1764704675353/experiments/test-autocomplete-updated.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /tmp/gh-issue-solver-1764704675353/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Testing Updated Autocomplete Functionality
+
+=====================================
+
+Test 1: /init command completion
+  Input: "/in"
+  Completions: [ '/init' ]
+  Expected: ["/init"]
+  Result: ✓ PASS
+
+Test 2: /memory show subcommand completion
+  Input: "/memory sh"
+  Completions: [ 'show' ]
+  Expected: ["show"]
+  Result: ✓ PASS
+
+Test 3: /memory refresh subcommand completion
+  Input: "/memory re"
+  Completions: [ 'remove', 'refresh', 'reload' ]
+  Expected: ["refresh", "reload", "remove"]
+  Result: ✓ PASS
+
+Test 4: Full /init command
+  Input: "/init"
+  Completions: [ '/init' ]
+  Expected: ["/init"]
+  Result: ✓ PASS
+
+=====================================
+Updated autocomplete tests completed!

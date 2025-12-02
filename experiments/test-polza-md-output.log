@@ -1,0 +1,37 @@
+(node:669010) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///tmp/gh-issue-solver-1764704675353/experiments/test-polza-md.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /tmp/gh-issue-solver-1764704675353/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Testing POLZA.md Loading Functionality
+
+=====================================
+
+Test 1: Create default POLZA.md
+  Created file: /tmp/test-POLZA.md
+  File exists: ✓
+  Result: ✓ PASS
+
+Test 2: Load POLZA.md from current directory
+  Instructions loaded: false
+  Loaded files: 0
+  Files: []
+  Result: ✓ PASS (no POLZA.md expected)
+
+Test 3: Create system message
+  System message created: false
+  Expected: null (no instructions loaded)
+  Result: ✓ PASS
+
+Test 4: Reload functionality
+  Reloaded successfully: true
+  Instructions after reload: false
+  Result: ✓ PASS
+
+Test 5: Create and load POLZA.md in test folder
+  Test file created: /tmp/polza-test/POLZA.md
+  Instructions loaded: true
+  Content includes "helpful": true
+  Result: ✓ PASS
+
+=====================================
+POLZA.md loading tests completed!

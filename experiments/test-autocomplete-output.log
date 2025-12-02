@@ -1,0 +1,57 @@
+(node:668392) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///tmp/gh-issue-solver-1764704675353/experiments/test-autocomplete.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /tmp/gh-issue-solver-1764704675353/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Testing Autocomplete Functionality
+
+=====================================
+
+Test 1: Command completion for "/he"
+  Input: "/he"
+  Completions: [ '/help' ]
+  Partial: /he
+  Expected: ["/help"]
+  Result: ✓ PASS
+
+Test 2: Command completion for "/s"
+  Input: "/s"
+  Completions: [ '/settings', '/sessions', '/save' ]
+  Expected: ["/settings", "/sessions", "/save"]
+  Result: ✓ PASS
+
+Test 3: Subcommand completion for "/memory l"
+  Input: "/memory l"
+  Completions: [ 'list' ]
+  Expected: ["list"]
+  Result: ✓ PASS
+
+Test 4: File completion for "@pac"
+  Input: "@pac"
+  Completions: [
+  'pac/',
+  'pac_refined_output.json',
+  'pac_refined_output_cidrs.txt',
+  'pac_refined_output_domains.txt',
+  'pac_refined_output_ips.txt',
+  'pac_rules.json',
+  'package-lock.json',
+  'package.json'
+]
+  Partial: pac
+  Expected: Should find pac/ directory and pac_*.txt files
+  Result: ✓ PASS
+
+Test 5: File completion for "@polza"
+  Input: "@polza"
+  Completions: [ 'POLZA_BUILD_INTEGRATION.md', 'polza-cli/', 'polza.txt' ]
+  Expected: Should find polza-cli/ directory
+  Result: ✓ PASS
+
+Test 6: Custom command completion for "/te"
+  Input: "/te"
+  Completions: [ '/test' ]
+  Expected: ["/test"]
+  Result: ✓ PASS
+
+=====================================
+Autocomplete tests completed!

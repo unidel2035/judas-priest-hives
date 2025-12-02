@@ -24,13 +24,14 @@ const SLASH_COMMANDS = [
   '/load',
   '/markdown',
   '/yolo',
+  '/init',
   '/exit'
 ];
 
 /**
  * Memory subcommands
  */
-const MEMORY_SUBCOMMANDS = ['set', 'add', 'get', 'list', 'search', 'delete', 'remove', 'clear'];
+const MEMORY_SUBCOMMANDS = ['set', 'add', 'get', 'list', 'search', 'delete', 'remove', 'clear', 'show', 'refresh', 'reload'];
 
 /**
  * Settings subcommands

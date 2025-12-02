@@ -92,12 +92,12 @@ export class HistoryManager {
    */
   async listSessions() {
     try {
-      const files = await fs.readdir(this.historyDir);
+      const files = await fs.readdir(this.sessionsDir);
       const sessions = [];
 
       for (const file of files) {
         if (file.endsWith('.json')) {
-          const filePath = path.join(this.historyDir, file);
+          const filePath = path.join(this.sessionsDir, file);
           const stats = await fs.stat(filePath);
           sessions.push({
             id: file.replace('.json', ''),
