@@ -246,7 +246,7 @@ function handleCommandCompletionFuzzy(line, allCommands) {
  * IMPORTANT: Uses process.stdout.write() instead of rl.write() to avoid
  * triggering readline 'line' events which would cause unwanted AI queries
  *
- * Updates preview in-place without creating new lines (like Gemini CLI)
+ * Updates preview in-place without erasing the input line (proper Gemini CLI style)
  */
 export function showFilePreview(line, rl) {
   if (!line.includes('@')) {
@@ -270,24 +270,34 @@ export function showFilePreview(line, rl) {
     if (completions.length > 0) {
       // Use process.stdout.write instead of rl.write to avoid triggering line events
       const preview = formatFilePreview(completions, partialPath);
+      const newPreviewLines = preview.split('\n');
+      const newPreviewHeight = newPreviewLines.length + 1; // +1 for leading newline
 
-      // Update preview in-place:
-      // 1. If preview exists, move cursor up to where it starts
-      // 2. Clear from cursor to end of screen (removes old preview)
-      // 3. Print new preview
-      // 4. Move cursor back up to input line
+      // Update preview in-place WITHOUT erasing the input line:
+      // 1. Clear old preview if it exists (move down, clear lines, move back up)
+      // 2. Print new preview below the input line
+      // 3. Move cursor back to input line position
 
       if (previewHeight > 0) {
-        process.stdout.write(`\x1b[${previewHeight}A`); // Move cursor up
+        // Clear old preview: move down to it, clear each line, move back
+        process.stdout.write('\n'); // Move to first preview line
+        for (let i = 0; i < previewHeight - 1; i++) {
+          process.stdout.write('\x1b[2K'); // Clear entire line
+          if (i < previewHeight - 2) {
+            process.stdout.write('\n'); // Move to next line
+          }
+        }
+        // Move cursor back to input line
+        process.stdout.write(`\x1b[${previewHeight}A`);
       }
 
-      process.stdout.write('\x1b[J');      // Clear from cursor to end of screen
-      process.stdout.write('\n' + preview); // Print preview
+      // Print new preview
+      process.stdout.write('\n' + preview);
 
-      // Calculate preview height (number of lines + 1 for the leading \n)
-      previewHeight = preview.split('\n').length + 1;
+      // Update preview height
+      previewHeight = newPreviewHeight;
 
-      // Move cursor back up to input line
+      // Move cursor back to input line
       process.stdout.write(`\x1b[${previewHeight}A`);
     }
   } catch (error) {
@@ -302,7 +312,7 @@ export function showFilePreview(line, rl) {
  * IMPORTANT: Uses process.stdout.write() instead of rl.write() to avoid
  * triggering readline 'line' events which would cause unwanted AI queries
  *
- * Updates preview in-place without creating new lines (like Gemini CLI)
+ * Updates preview in-place without erasing the input line (proper Gemini CLI style)
  */
 export function showCommandPreview(line, rl) {
   if (!line.startsWith('/')) {
@@ -335,38 +345,54 @@ export function showCommandPreview(line, rl) {
   if (matches.length > 0 && command.length > 1) {
     // Use process.stdout.write instead of rl.write to avoid triggering line events
     const preview = formatCommandPreview(matches, command);
+    const newPreviewLines = preview.split('\n');
+    const newPreviewHeight = newPreviewLines.length + 1; // +1 for leading newline
 
-    // Update preview in-place:
-    // 1. If preview exists, move cursor up to where it starts
-    // 2. Clear from cursor to end of screen (removes old preview)
-    // 3. Print new preview
-    // 4. Move cursor back up to input line
+    // Update preview in-place WITHOUT erasing the input line:
+    // 1. Clear old preview if it exists (move down, clear lines, move back up)
+    // 2. Print new preview below the input line
+    // 3. Move cursor back to input line position
 
     if (previewHeight > 0) {
-      process.stdout.write(`\x1b[${previewHeight}A`); // Move cursor up
+      // Clear old preview: move down to it, clear each line, move back
+      process.stdout.write('\n'); // Move to first preview line
+      for (let i = 0; i < previewHeight - 1; i++) {
+        process.stdout.write('\x1b[2K'); // Clear entire line
+        if (i < previewHeight - 2) {
+          process.stdout.write('\n'); // Move to next line
+        }
+      }
+      // Move cursor back to input line
+      process.stdout.write(`\x1b[${previewHeight}A`);
     }
 
-    process.stdout.write('\x1b[J');      // Clear from cursor to end of screen
-    process.stdout.write('\n' + preview); // Print preview
+    // Print new preview
+    process.stdout.write('\n' + preview);
 
-    // Calculate preview height (number of lines + 1 for the leading \n)
-    previewHeight = preview.split('\n').length + 1;
+    // Update preview height
+    previewHeight = newPreviewHeight;
 
-    // Move cursor back up to input line
+    // Move cursor back to input line
     process.stdout.write(`\x1b[${previewHeight}A`);
   }
 }
 
 /**
  * Clear preview area
- * This clears any preview text shown below the input line
+ * This clears any preview text shown below the input line WITHOUT erasing the input
  */
 export function clearPreview() {
   if (previewHeight > 0) {
-    // Move cursor up to where preview starts
+    // Clear preview by moving down, clearing each line, then moving back
+    process.stdout.write('\n'); // Move to first preview line
+    for (let i = 0; i < previewHeight - 1; i++) {
+      process.stdout.write('\x1b[2K'); // Clear entire line
+      if (i < previewHeight - 2) {
+        process.stdout.write('\n'); // Move to next line
+      }
+    }
+    // Move cursor back to input line
     process.stdout.write(`\x1b[${previewHeight}A`);
-    // Clear from cursor to end of screen
-    process.stdout.write('\x1b[J');
     // Reset preview height
     previewHeight = 0;
   }
