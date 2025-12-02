@@ -1,0 +1,51 @@
+(node:670907) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///tmp/gh-issue-solver-1764704675353/experiments/test-session-saving.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /tmp/gh-issue-solver-1764704675353/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Testing Session Saving Functionality
+
+=====================================
+
+Test 1: Directory initialization
+  Config directory: /home/hive/.config/polza-cli
+  Expected pattern: /.config/polza-cli
+  Result: ✓ PASS
+
+Test 2: Session ID generation
+  Session ID: session-2025-12-02T19-50-03-761Z
+  Starts with "session-": true
+  Result: ✓ PASS
+
+Test 3: Save session
+  Session file: /home/hive/.config/polza-cli/sessions/session-2025-12-02T19-50-03-761Z.json
+  File saved: true
+  Result: ✓ PASS
+
+Test 4: List sessions
+  Sessions found: 2
+  Current session in list: true
+  Result: ✓ PASS
+
+Test 5: Load session
+  Session loaded: true
+  History length: 2
+  First message: Hello
+  Result: ✓ PASS
+
+Test 6: Save history
+  History file: /home/hive/.config/polza-cli/history/session-2025-12-02T19-50-03-761Z.json
+  File saved: true
+  Result: ✓ PASS
+
+Test 7: Log chat interaction
+  Logging completed successfully
+  Result: ✓ PASS
+
+=====================================
+Session saving tests completed!
+
+Summary:
+  Config Dir: /home/hive/.config/polza-cli
+  Sessions Dir: /home/hive/.config/polza-cli/sessions
+  History Dir: /home/hive/.config/polza-cli/history
+  Logs Dir: /home/hive/.config/polza-cli/logs

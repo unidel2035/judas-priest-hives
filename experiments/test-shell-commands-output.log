@@ -1,0 +1,52 @@
+(node:668705) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///tmp/gh-issue-solver-1764704675353/experiments/test-shell-commands.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /tmp/gh-issue-solver-1764704675353/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Testing Shell Command Functionality
+
+=====================================
+
+Test 1: Direct shell command "!ls -la"
+  Input: "Show files: !ls -la"
+  YOLO mode: true
+  Commands executed: 1
+  Success: ✓
+  Result: ✓ PASS
+
+Test 2: Braced shell command "!{pwd}"
+  Input: "Current dir: !{pwd}"
+  YOLO mode: true
+  Commands executed: 1
+  Success: ✓
+  Result: ✓ PASS
+
+Test 3: Multiple shell commands "!pwd and !whoami"
+  Input: "Show !pwd and !whoami"
+  YOLO mode: true
+  Commands executed: 2
+  Expected: 2 commands
+  Result: ✓ PASS
+
+Test 4: Shell command with YOLO mode off
+  Input: "Show files: !ls"
+  YOLO mode: false
+  Commands executed: 0
+  Errors: 1
+  Expected: Error about YOLO mode not enabled
+  Result: ✓ PASS
+
+Test 5: Special syntax detection
+  hasSpecialSyntax("!ls -la"): true
+  hasSpecialSyntax("@file.js"): true
+  hasSpecialSyntax("normal text"): false
+  Result: ✓ PASS
+
+Test 6: Shell command with arguments "!echo Hello World"
+  Input: "Test: !echo "Hello World""
+  YOLO mode: true
+  Commands executed: 1
+  Output includes "Hello": true
+  Result: ✓ PASS
+
+=====================================
+Shell command tests completed!
