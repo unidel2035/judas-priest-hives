@@ -90,6 +90,35 @@ class PolzaCLI {
   }
 
   /**
+   * Fuzzy match a command to the closest built-in command
+   */
+  async fuzzyMatchCommand(inputCmd) {
+    const builtInCommands = [
+      '/help', '/version', '/tools', '/memory', '/settings', 
+      '/restore', '/clear', '/history', '/sessions', '/save', 
+      '/load', '/markdown', '/yolo', '/init', '/exit'
+    ];
+
+    // Import fuzzyScore function
+    const { fuzzyScore } = await import('./lib/autocomplete.js');
+
+    // Find best match
+    let bestMatch = null;
+    let bestScore = 0;
+
+    for (const cmd of builtInCommands) {
+      const score = fuzzyScore(inputCmd, cmd);
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = cmd;
+      }
+    }
+
+    // Only return fuzzy match if score is reasonable (not too low)
+    return bestScore >= 50 ? bestMatch : inputCmd;
+  }
+
+  /**
    * Show welcome banner
    */
   showBanner() {
@@ -195,14 +224,18 @@ class PolzaCLI {
         return; // Let Ctrl+C be handled normally
       }
       
-      // Show preview when user types @ or /
-      if (str === '@') {
-        // Small delay to allow the character to be added to the line
-        setTimeout(() => showFilePreview(this.rl.line, this.rl), 10);
-      } else if (str === '/') {
-        // Small delay to allow the character to be added to the line
-        setTimeout(() => showCommandPreview(this.rl.line, this.rl), 10);
-      }
+      // Small delay to allow the character to be added to the line
+      setTimeout(() => {
+        // Show file preview when typing @ references
+        if (this.rl.line.includes('@')) {
+          showFilePreview(this.rl.line, this.rl);
+        }
+        
+        // Show command preview when typing / commands
+        if (this.rl.line.startsWith('/')) {
+          showCommandPreview(this.rl.line, this.rl);
+        }
+      }, 10);
     });
 
     this.rl.on('close', () => {
@@ -229,8 +262,11 @@ class PolzaCLI {
    */
   async handleCommand(command) {
     const parts = command.toLowerCase().split(' ');
-    const cmd = parts[0];
+    let cmd = parts[0];
     const args = parts.slice(1).join(' ');
+
+    // Try fuzzy matching for built-in commands
+    cmd = await this.fuzzyMatchCommand(cmd);
 
     // Check if it's a custom command
     const customCmd = parseCustomCommand(command);
@@ -320,13 +356,21 @@ class PolzaCLI {
         break;
 
       default:
-        // Handle empty command after slash (user just pressed Enter)
-        if (cmd === '/' && !args) {
-          console.log(`${colors.yellow}Type a command after / or press TAB for autocomplete${colors.reset}`);
-        } else {
-          console.log(`${colors.red}Unknown command:${colors.reset} ${command}`);
-          console.log(`Type ${colors.cyan}/help${colors.reset} for available commands`);
-        }
+          // Handle empty command after slash (user just pressed Enter)
+          if (cmd === '/' && !args) {
+            console.log(`${colors.yellow}Type a command after / or press TAB for autocomplete${colors.reset}`);
+          } else {
+            // Show suggestion for unknown command
+            const bestMatch = await this.fuzzyMatchCommand(cmd);
+            if (bestMatch !== cmd && bestMatch) {
+              console.log(`${colors.red}Unknown command:${colors.reset} ${command}`);
+              console.log(`${colors.yellow}Did you mean:${colors.reset} ${colors.cyan}${bestMatch}${colors.reset}?`);
+              console.log(`Type ${colors.cyan}/help${colors.reset} for available commands`);
+            } else {
+              console.log(`${colors.red}Unknown command:${colors.reset} ${command}`);
+              console.log(`Type ${colors.cyan}/help${colors.reset} for available commands`);
+            }
+          }
     }
   }
 

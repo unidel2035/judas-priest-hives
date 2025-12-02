@@ -78,7 +78,7 @@ export function setCommandHistory(history) {
  * @param {string} text - The text to match against
  * @returns {number} Match score (0 = no match, higher = better match)
  */
-function fuzzyScore(pattern, text) {
+export function fuzzyScore(pattern, text) {
   pattern = pattern.toLowerCase();
   text = text.toLowerCase();
 
@@ -262,11 +262,22 @@ export function showCommandPreview(line, rl) {
     return; // Don't show preview for arguments
   }
 
-  const commands = getAvailableCommands();
-  const matches = commands.filter(cmd => cmd.startsWith(command));
+  const allCommands = getAvailableCommands();
+  
+  // Use fuzzy matching to find commands
+  const scoredCommands = allCommands.map(cmd => ({
+    cmd,
+    score: fuzzyScore(command, cmd)
+  }));
+
+  // Filter and sort by score
+  const matches = scoredCommands
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.cmd);
 
   // Only show preview if there are matches and user isn't just typing "/"
-  if (matches.length > 0 && command.length > 1) {
+  if (matches.length > 0 && command.length > 0) {
     // Clear current line and show preview
     rl.write(`\n${formatCommandPreview(matches, command)}\n`);
     rl.write(`${line}`);
@@ -512,8 +523,8 @@ function findFileCompletions(partialPath) {
     // Read directory contents
     const entries = readdirSync(dirPath);
 
-    // Filter and format entries
-    const matches = entries
+    // Filter and format entries with fuzzy matching
+    const scoredEntries = entries
       .filter(entry => {
         // Skip hidden files unless explicitly typed
         if (entry.startsWith('.') && !searchName.startsWith('.')) {
@@ -523,9 +534,17 @@ function findFileCompletions(partialPath) {
         if (entry === 'node_modules' || entry === '.git') {
           return false;
         }
-        // Match the search pattern
-        return entry.toLowerCase().startsWith(searchName.toLowerCase());
+        // Use fuzzy matching
+        return fuzzyScore(searchName, entry) > 0;
       })
+      .map(entry => ({
+        entry,
+        score: fuzzyScore(searchName, entry)
+      }))
+      .sort((a, b) => b.score - a.score)
+      .map(item => item.entry);
+
+    const matches = scoredEntries
       .map(entry => {
         const fullEntryPath = path.join(dirPath, entry);
         const stats = statSync(fullEntryPath);
@@ -562,7 +581,7 @@ function fuzzyFileSearch(searchName, cwd) {
     // Simple fallback: just return basic files from current directory
     const entries = readdirSync(cwd, { withFileTypes: true });
     
-    return entries
+    const scoredEntries = entries
       .filter(entry => {
         // Skip hidden files unless explicitly typed
         if (entry.name.startsWith('.') && !searchName.startsWith('.')) {
@@ -572,13 +591,20 @@ function fuzzyFileSearch(searchName, cwd) {
         if (entry.name === 'node_modules' || entry.name === '.git') {
           return false;
         }
-        // Match the search pattern
-        return entry.name.toLowerCase().includes(searchName.toLowerCase());
+        // Use fuzzy matching
+        return fuzzyScore(searchName, entry.name) > 0;
       })
+      .map(entry => ({
+        entry,
+        score: fuzzyScore(searchName, entry.name)
+      }))
+      .sort((a, b) => b.score - a.score)
       .slice(0, 20) // Limit results
-      .map(entry => {
-        return entry.isDirectory() ? entry.name + '/' : entry.name;
+      .map(item => {
+        return item.entry.isDirectory() ? item.entry.name + '/' : item.entry.name;
       });
+
+    return scoredEntries;
   } catch (error) {
     return [];
   }
