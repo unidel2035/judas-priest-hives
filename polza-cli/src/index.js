@@ -17,7 +17,7 @@ import { processPrompt, hasSpecialSyntax } from './lib/prompt-processor.js';
 import { CommandLoader, parseCustomCommand } from './lib/command-loader.js';
 import { MemoryManager } from './lib/memory-manager.js';
 import { SettingsManager } from './lib/settings-manager.js';
-import { createCompleter, updateCompleter } from './lib/autocomplete.js';
+import { createCompleter, updateCompleter, showFilePreview, showCommandPreview } from './lib/autocomplete.js';
 import { PolzaMdLoader, createDefaultPolzaMd } from './lib/polza-md-loader.js';
 
 // ANSI color codes
@@ -188,6 +188,22 @@ class PolzaCLI {
       this.rl.prompt();
     });
 
+    // Add interactive preview on keypress
+    this.rl.input.on('keypress', (str, key) => {
+      if (key.ctrl && key.name === 'c') {
+        return; // Let Ctrl+C be handled normally
+      }
+      
+      // Show preview when user types @ or /
+      if (str === '@') {
+        // Small delay to allow the character to be added to the line
+        setTimeout(() => showFilePreview(this.rl.line, this.rl), 10);
+      } else if (str === '/') {
+        // Small delay to allow the character to be added to the line
+        setTimeout(() => showCommandPreview(this.rl.line, this.rl), 10);
+      }
+    });
+
     this.rl.on('close', () => {
       console.log(`\n${colors.dim}Goodbye!${colors.reset}`);
       process.exit(0);
@@ -299,8 +315,13 @@ class PolzaCLI {
         break;
 
       default:
-        console.log(`${colors.red}Unknown command:${colors.reset} ${command}`);
-        console.log(`Type ${colors.cyan}/help${colors.reset} for available commands`);
+        // Handle empty command after slash (user just pressed Enter)
+        if (cmd === '/' && !args) {
+          console.log(`${colors.yellow}Type a command after / or press TAB for autocomplete${colors.reset}`);
+        } else {
+          console.log(`${colors.red}Unknown command:${colors.reset} ${command}`);
+          console.log(`Type ${colors.cyan}/help${colors.reset} for available commands`);
+        }
     }
   }
 

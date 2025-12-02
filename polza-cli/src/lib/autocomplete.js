@@ -66,6 +66,146 @@ export function createCompleter(customCommands = []) {
 }
 
 /**
+ * Show interactive preview for @ file references
+ * This provides real-time feedback like zsh
+ */
+export function showFilePreview(line, rl) {
+  if (!line.includes('@')) {
+    return;
+  }
+
+  const lastAtIndex = line.lastIndexOf('@');
+  const afterAt = line.substring(lastAtIndex + 1);
+  
+  // Only show preview if user is actively typing a path (not just @)
+  if (afterAt.length === 0) {
+    return;
+  }
+
+  const isQuoted = afterAt.startsWith('"') || afterAt.startsWith("'");
+  const partialPath = isQuoted ? afterAt.substring(1) : afterAt;
+
+  try {
+    const completions = findFileCompletions(partialPath);
+    
+    if (completions.length > 0) {
+      // Clear current line and show preview
+      rl.write(`\n${formatFilePreview(completions, partialPath)}\n`);
+      rl.write(`${line}`);
+    }
+  } catch (error) {
+    // Silent fail for preview
+  }
+}
+
+/**
+ * Show interactive preview for / commands
+ * This provides real-time feedback like zsh
+ */
+export function showCommandPreview(line, rl) {
+  if (!line.startsWith('/')) {
+    return;
+  }
+
+  const parts = line.split(/\s+/);
+  const command = parts[0];
+
+  // Only show preview if user is typing a command (not arguments)
+  if (parts.length > 1 && line.endsWith(' ')) {
+    return; // Don't show preview for arguments
+  }
+
+  const commands = getAvailableCommands();
+  const matches = commands.filter(cmd => cmd.startsWith(command));
+
+  // Only show preview if there are matches and user isn't just typing "/"
+  if (matches.length > 0 && command.length > 1) {
+    // Clear current line and show preview
+    rl.write(`\n${formatCommandPreview(matches, command)}\n`);
+    rl.write(`${line}`);
+  }
+}
+
+/**
+ * Format file preview output
+ */
+function formatFilePreview(files, partialPath) {
+  const maxFiles = 8;
+  const displayFiles = files.slice(0, maxFiles);
+  
+  let output = `${'─'.repeat(50)}\n`;
+  output += `📁 Files matching "${partialPath}":\n`;
+  output += `${'─'.repeat(50)}\n`;
+  
+  displayFiles.forEach(file => {
+    const icon = file.endsWith('/') ? '📁' : '📄';
+    output += `  ${icon} ${file}\n`;
+  });
+  
+  if (files.length > maxFiles) {
+    output += `  ... and ${files.length - maxFiles} more\n`;
+  }
+  
+  output += `${'─'.repeat(50)}\n`;
+  output += `Press TAB to autocomplete`;
+  
+  return output;
+}
+
+/**
+ * Format command preview output
+ */
+function formatCommandPreview(commands, partial) {
+  let output = `${'─'.repeat(50)}\n`;
+  output += `⚡ Commands matching "${partial}":\n`;
+  output += `${'─'.repeat(50)}\n`;
+  
+  commands.forEach(cmd => {
+    const description = getCommandDescription(cmd);
+    output += `  ${cmd.padEnd(15)} ${description}\n`;
+  });
+  
+  output += `${'─'.repeat(50)}\n`;
+  output += `Press TAB to autocomplete`;
+  
+  return output;
+}
+
+/**
+ * Get command descriptions
+ */
+function getCommandDescription(command) {
+  const descriptions = {
+    '/help': 'Show available commands',
+    '/tools': 'List available tools',
+    '/memory': 'Manage persistent memory',
+    '/settings': 'View/modify settings',
+    '/restore': 'Restore a saved session',
+    '/clear': 'Clear conversation history',
+    '/history': 'Show conversation history',
+    '/sessions': 'List saved sessions',
+    '/save': 'Save current session',
+    '/load': 'Load a saved session',
+    '/markdown': 'Toggle markdown rendering',
+    '/yolo': 'Toggle YOLO mode (shell execution)',
+    '/init': 'Create a POLZA.md file',
+    '/exit': 'Exit the CLI'
+  };
+  
+  return descriptions[command] || 'Custom command';
+}
+
+/**
+ * Get all available commands
+ */
+function getAvailableCommands() {
+  return [
+    '/help', '/tools', '/memory', '/settings', '/restore', '/clear',
+    '/history', '/sessions', '/save', '/load', '/markdown', '/yolo', '/init', '/exit'
+  ];
+}
+
+/**
  * Handle completion for slash commands
  */
 function handleCommandCompletion(line, allCommands) {
