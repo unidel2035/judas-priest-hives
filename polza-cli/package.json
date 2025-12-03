@@ -6,13 +6,13 @@
   "type": "module",
   "bin": {
     "polza-cli": "./cli/index.js",
-    "polza-tui": "./tui/tui.js"
+    "polza-tui": "./tui/bin.js"
   },
   "scripts": {
     "start": "node cli/index.js",
     "dev": "node cli/index.js",
-    "start:tui": "node tui/tui.js",
-    "tui": "node tui/tui.js"
+    "start:tui": "tsx tui/tui.js",
+    "tui": "tsx tui/tui.js"
   },
   "keywords": [
     "ai",
@@ -46,6 +46,7 @@
     "@swc/cli": "^0.7.9",
     "@swc/core": "^1.15.3",
     "esbuild": "^0.27.0",
-    "esbuild-register": "^3.6.0"
+    "esbuild-register": "^3.6.0",
+    "tsx": "^4.21.0"
   }
 }
