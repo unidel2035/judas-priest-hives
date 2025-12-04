@@ -162,3 +162,48 @@ export function autoSaveSession(client, config) {
     // Silent fail for auto-save
   }
 }
+
+/**
+ * Export session to Markdown or JSON format
+ */
+export function exportSession(history, filename, format = 'markdown') {
+  try {
+    let content;
+
+    if (format === 'json') {
+      // Export as JSON
+      content = JSON.stringify({
+        exportedAt: new Date().toISOString(),
+        messageCount: history.length,
+        conversation: history,
+      }, null, 2);
+    } else {
+      // Export as Markdown
+      content = `# Conversation Export\n\n`;
+      content += `**Exported:** ${new Date().toLocaleString()}\n`;
+      content += `**Messages:** ${history.length}\n\n`;
+      content += `---\n\n`;
+
+      for (const msg of history) {
+        const role = msg.role === 'user' ? '👤 **User**' : '🤖 **Assistant**';
+        content += `## ${role}\n\n`;
+
+        if (typeof msg.content === 'string') {
+          content += msg.content + '\n\n';
+        } else {
+          content += '_[Tool call or complex content]_\n\n';
+        }
+
+        content += `---\n\n`;
+      }
+    }
+
+    writeFileSync(filename, content, 'utf-8');
+    console.log(chalk.green(`\n✓ Session exported to:`));
+    console.log(chalk.gray(`  ${filename}\n`));
+    return true;
+  } catch (error) {
+    console.error(chalk.red(`\n✗ Failed to export session: ${error.message}\n`));
+    return false;
+  }
+}

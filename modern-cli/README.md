@@ -9,18 +9,29 @@ Hives Modern CLI brings AI-powered assistance directly into your terminal with a
 
 ## ✨ Features
 
+### Core Features
 - 🎨 **Beautiful Terminal UI** - Gradient banners, colored output, and markdown rendering
 - 🤖 **AI-Powered** - Chat with Claude, GPT-4, and other models via Polza AI
-- 🔧 **Built-in Tools** - File operations, shell commands, glob patterns
+- 🔧 **Built-in Tools** - File operations, shell commands, glob patterns, web fetch
 - 📝 **File Inclusion** - Use `@file.js` syntax to include files in prompts
 - 🖼️ **Multimodal Support** - Include images in prompts with `@image.png`
-- 💾 **Session Management** - Save and restore conversation checkpoints
+- 💾 **Session Management** - Save, restore, and export conversations
 - ⚡ **Streaming Responses** - Real-time AI responses (toggle with `/stream`)
 - 🚀 **Shell Execution** - Run shell commands with `!ls -la` (YOLO mode)
 - 💬 **Interactive & Non-Interactive** - Use in chat mode or for quick queries
 - 🎯 **Multiple Output Formats** - Text, JSON, or streaming JSON
 - ⌨️ **Autocomplete & Fuzzy Search** - Tab completion for commands, files, and history
 - ⌨️ **Slash Commands** - Quick access to features with `/help`, `/model`, etc.
+
+### Advanced Features (NEW!)
+- 📋 **Context Files (HIVES.md)** - Hierarchical project-specific instructions
+- 🔧 **Custom Commands** - TOML-based workflow automation
+- ⚙️ **Settings System** - Hierarchical configuration (global + project)
+- 🌐 **Web Fetch Tool** - Retrieve content from URLs
+- 📊 **Statistics** - Track token usage and conversation metrics
+- 📤 **Session Export** - Export conversations to Markdown or JSON
+- 📋 **Clipboard Integration** - Copy responses directly to clipboard
+- 🎨 **Customizable** - Extensive settings for UI, behavior, and tools
 
 ## 📦 Installation
 
@@ -116,6 +127,7 @@ node src/index.js --yolo
 
 Use these commands during interactive sessions:
 
+### Basic Commands
 | Command | Description |
 |---------|-------------|
 | `/help` | Show help and available commands |
@@ -125,13 +137,41 @@ Use these commands during interactive sessions:
 | `/history` | Show conversation history |
 | `/reset` | Clear conversation history |
 | `/version` | Show version information |
+
+### Configuration Commands
+| Command | Description |
+|---------|-------------|
 | `/model [name]` | Change or show current AI model |
 | `/yolo` | Toggle YOLO mode on/off |
 | `/stream` | Toggle streaming mode on/off |
 | `/tools` | List available tools |
+| `/settings [action]` | View/manage settings |
+
+### Session Management Commands
+| Command | Description |
+|---------|-------------|
 | `/save [name]` | Save current session |
 | `/load <name>` | Load saved session |
 | `/sessions` | List all saved sessions |
+| `/export <format>` | Export session (markdown/json) |
+
+### Context & Memory Commands  (NEW!)
+| Command | Description |
+|---------|-------------|
+| `/init` | Create HIVES.md context file |
+| `/memory show` | Display loaded context |
+| `/memory refresh` | Reload all context files |
+| `/memory add <text>` | Add custom memory |
+| `/memory list` | List context file paths |
+
+### Utility Commands (NEW!)
+| Command | Description |
+|---------|-------------|
+| `/copy` | Copy last response to clipboard |
+| `/stats` | Show conversation statistics |
+| `/fetch <url>` | Fetch content from URL |
+| `/commands` | List custom commands |
+| `/examples [scope]` | Create example custom commands |
 
 ## 🎨 Special Syntax
 
@@ -236,9 +276,305 @@ The AI can automatically use these tools:
 - `glob_files` - Find files matching patterns
 - `file_exists` - Check if file/directory exists
 
+### Network Tools (NEW!)
+
+- `web_fetch` - Fetch content from URLs (supports HTML and plain text)
+
 ### Advanced Tools
 
 - `execute_shell` - Run shell commands (YOLO mode only)
+
+## 📋 Context Files (HIVES.md)
+
+Provide persistent context to the AI with hierarchical HIVES.md files:
+
+### Create a Context File
+
+```bash
+# In your project directory
+You > /init
+✓ Created HIVES.md at: /path/to/project/HIVES.md
+```
+
+### Context File Hierarchy
+
+The CLI automatically loads context from:
+
+1. **Global Context**: `~/.hives-cli/HIVES.md` (applies to all projects)
+2. **Project Context**: `./HIVES.md` and all parent directories
+3. **Subdirectory Context**: `./subdir/HIVES.md` (one level deep)
+
+### Example HIVES.md
+
+```markdown
+# Project Context for My App
+
+## Project Overview
+This is a Node.js REST API built with Express.js.
+
+## Coding Guidelines
+- Use async/await, not callbacks
+- Follow ESLint rules
+- Write tests for all endpoints
+
+## Architecture
+- API routes in `src/routes/`
+- Business logic in `src/services/`
+- Database models in `src/models/`
+
+## Important Notes
+- Always validate user input
+- Use JWT for authentication
+
+## Custom Instructions
+When suggesting code changes, prioritize security and performance.
+```
+
+### Managing Context
+
+```bash
+# Show loaded context
+You > /memory show
+
+# Reload context files
+You > /memory refresh
+
+# Add custom memory (persisted globally)
+You > /memory add "Use TypeScript strict mode"
+
+# List context file locations
+You > /memory list
+```
+
+### Include Other Files
+
+You can include other markdown files in your HIVES.md:
+
+```markdown
+# Main Context
+
+@docs/architecture.md
+@docs/api-guidelines.md
+```
+
+## 🔧 Custom Commands
+
+Automate workflows with TOML-based custom commands:
+
+### Create Example Commands
+
+```bash
+You > /examples global
+✓ Created example commands in: ~/.hives-cli/commands/
+
+Example commands:
+  /commit - Generate commit message
+  /review - Code review assistant
+  /docs - Generate documentation
+  /gitstatus - Git status summary
+  /git:commit - Git commit helper (namespaced)
+```
+
+### Command File Format
+
+Create `.toml` files in:
+- `~/.hives-cli/commands/` (global commands)
+- `.hives/commands/` (project-specific commands)
+
+Example: `~/.hives-cli/commands/commit.toml`
+
+```toml
+# Git Commit Message Generator
+description = "Generate a git commit message based on changes"
+prompt = """
+Generate a concise git commit message for the following changes:
+
+{{args}}
+
+Follow conventional commits format (feat:, fix:, docs:, etc.)
+"""
+```
+
+### Command Features
+
+**Arguments**: Use `{{args}}` placeholder
+
+```toml
+prompt = "Explain this code: {{args}}"
+```
+
+**Shell Injection**: Use `!{command}` syntax
+
+```toml
+prompt = """
+Current git status:
+!{git status --short}
+
+Please summarize the changes.
+"""
+```
+
+**Namespacing**: Organize commands in subdirectories
+
+```
+commands/
+├── commit.toml         -> /commit
+├── review.toml         -> /review
+└── git/
+    └── diff.toml       -> /git:diff
+```
+
+### Using Custom Commands
+
+```bash
+# List available commands
+You > /commands
+
+# Use a command
+You > /commit
+
+# Use command with arguments
+You > /review @src/app.js
+
+# Use namespaced command
+You > /git:commit
+```
+
+## ⚙️ Settings System
+
+Configure Modern CLI with hierarchical settings:
+
+### View Settings
+
+```bash
+You > /settings
+# or
+You > /settings show
+```
+
+### Create Settings File
+
+```bash
+# Global settings (applies to all projects)
+You > /settings create global
+
+# Project settings (applies to current project)
+You > /settings create project
+```
+
+### Settings File Locations
+
+- **Global**: `~/.hives-cli/settings.json`
+- **Project**: `.hives/settings.json`
+
+Project settings override global settings.
+
+### Available Settings
+
+```json
+{
+  "general": {
+    "model": "claude-3-5-sonnet-latest",
+    "stream": true,
+    "yoloMode": false,
+    "contextFiles": true,
+    "customCommands": true
+  },
+  "ui": {
+    "theme": "default",
+    "showBanner": true,
+    "markdown": true,
+    "syntaxHighlight": true,
+    "showTips": true
+  },
+  "session": {
+    "autoSave": false,
+    "autoLoad": false,
+    "maxSessions": 50,
+    "exportFormat": "markdown"
+  },
+  "context": {
+    "loadGlobal": true,
+    "loadProject": true,
+    "loadSubdirectories": true,
+    "maxContextSize": 100000
+  },
+  "tools": {
+    "webFetch": true,
+    "shellExecution": false,
+    "fileOperations": true
+  },
+  "advanced": {
+    "apiBase": "https://api.polza.ai/v1",
+    "timeout": 30000,
+    "maxRetries": 3,
+    "debug": false
+  }
+}
+```
+
+### Manage Settings
+
+```bash
+# Set a value
+You > /settings set ui.theme dark global
+
+# Reset to defaults
+You > /settings reset global
+
+# Export settings
+You > /settings export my-settings.json
+
+# Import settings
+You > /settings import my-settings.json global
+```
+
+## 📊 Statistics & Utilities
+
+### Conversation Statistics
+
+```bash
+You > /stats
+
+📊 Conversation Statistics:
+
+  Total Messages:           24
+  User Messages:            12
+  Assistant Messages:       12
+  Total Characters:         45,623
+  Estimated Tokens:         11,405
+```
+
+### Copy to Clipboard
+
+```bash
+# Copy the last AI response to clipboard
+You > /copy
+✓ Last response copied to clipboard
+```
+
+### Web Fetch
+
+```bash
+# Fetch content from a URL (for use in prompts or standalone)
+You > /fetch https://example.com
+
+🌐 Fetching: https://example.com
+
+✓ Status: 200
+  Content-Type: text/html; charset=utf-8
+  Content-Length: 1256 bytes
+```
+
+### Export Sessions
+
+```bash
+# Export to Markdown (default)
+You > /export markdown conversation.md
+
+# Export to JSON
+You > /export json conversation.json
+```
 
 ## 🎯 Available Models
 

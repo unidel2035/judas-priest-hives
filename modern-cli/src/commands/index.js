@@ -4,7 +4,12 @@
 
 import chalk from 'chalk';
 import { getVersion } from '../utils/version.js';
-import { saveSession, loadSession, listSessions, deleteSession } from '../utils/session.js';
+import { saveSession, loadSession, listSessions, deleteSession, exportSession } from '../utils/session.js';
+import { createDefaultHivesFile } from '../utils/context.js';
+import { copyToClipboard } from '../utils/clipboard.js';
+import { fetchAndDisplay } from '../utils/web-fetch.js';
+import { createDefaultSettings } from '../utils/settings.js';
+import { createExampleCommands } from '../utils/custom-commands.js';
 
 /**
  * Handle slash commands
@@ -85,7 +90,58 @@ export async function handleCommand(input, context) {
       console.log(chalk.green('✓ Conversation history cleared\n'));
       return false;
 
+    case 'init':
+      await createDefaultHivesFile();
+      return false;
+
+    case 'copy':
+      handleCopy(context);
+      return false;
+
+    case 'stats':
+      showStats(client);
+      return false;
+
+    case 'fetch':
+      await handleFetch(args);
+      return false;
+
+    case 'memory':
+      await handleMemoryCommand(args, context);
+      return false;
+
+    case 'settings':
+      await handleSettingsCommand(args, context);
+      return false;
+
+    case 'commands':
+      if (context.customCommands) {
+        context.customCommands.listCommands();
+      } else {
+        console.log(chalk.gray('\n  Custom commands not loaded.\n'));
+      }
+      return false;
+
+    case 'examples':
+      await createExampleCommands(args[0] || 'global');
+      console.log(chalk.cyan('\n💡 Reload the CLI to use the example commands.\n'));
+      return false;
+
+    case 'export':
+      handleExport(client, args);
+      return false;
+
     default:
+      // Check if it's a custom command
+      if (context.customCommands && context.customCommands.hasCommand(command)) {
+        const prompt = await context.customCommands.executeCommand(command, args.join(' '));
+        if (prompt) {
+          // Return the prompt to be executed by the main loop
+          context.customCommandPrompt = prompt;
+          return false;
+        }
+      }
+
       console.log(chalk.red(`✗ Unknown command: ${command}`));
       console.log(chalk.gray('Type /help for available commands\n'));
       return false;
@@ -112,6 +168,15 @@ function showHelp() {
     ['/save [name]', 'Save current session'],
     ['/load <name>', 'Load saved session'],
     ['/sessions', 'List all saved sessions'],
+    ['/export <format>', 'Export session (markdown/json)'],
+    ['/init', 'Create HIVES.md context file'],
+    ['/copy', 'Copy last response to clipboard'],
+    ['/stats', 'Show conversation statistics'],
+    ['/fetch <url>', 'Fetch content from URL'],
+    ['/memory <action>', 'Manage context memory'],
+    ['/settings [action]', 'View/manage settings'],
+    ['/commands', 'List custom commands'],
+    ['/examples [scope]', 'Create example custom commands'],
   ];
 
   for (const [cmd, desc] of commands) {
@@ -233,4 +298,212 @@ function handleLoadSession(client, config, args) {
     config.yoloMode = sessionData.metadata?.yoloMode || false;
     console.log();
   }
+}
+
+/**
+ * Handle copy command
+ */
+function handleCopy(context) {
+  const { client } = context;
+  const history = client.getHistory();
+
+  if (history.length === 0) {
+    console.log(chalk.yellow('\n⚠️  No conversation history to copy\n'));
+    return;
+  }
+
+  // Get the last assistant message
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].role === 'assistant') {
+      const content = typeof history[i].content === 'string'
+        ? history[i].content
+        : '[Tool call - cannot copy]';
+
+      if (copyToClipboard(content)) {
+        console.log(chalk.green('\n✓ Last response copied to clipboard\n'));
+      }
+      return;
+    }
+  }
+
+  console.log(chalk.yellow('\n⚠️  No assistant messages found\n'));
+}
+
+/**
+ * Show conversation statistics
+ */
+function showStats(client) {
+  const history = client.getHistory();
+
+  console.log(chalk.cyan.bold('\n📊 Conversation Statistics:\n'));
+
+  let userMessages = 0;
+  let assistantMessages = 0;
+  let totalChars = 0;
+  let totalTokensEstimate = 0;
+
+  for (const msg of history) {
+    if (msg.role === 'user') {
+      userMessages++;
+    } else if (msg.role === 'assistant') {
+      assistantMessages++;
+    }
+
+    const content = typeof msg.content === 'string' ? msg.content : '';
+    totalChars += content.length;
+    // Rough estimate: ~4 chars per token
+    totalTokensEstimate += Math.ceil(content.length / 4);
+  }
+
+  console.log(`  ${chalk.green('Total Messages:'.padEnd(25))} ${chalk.gray(history.length)}`);
+  console.log(`  ${chalk.green('User Messages:'.padEnd(25))} ${chalk.gray(userMessages)}`);
+  console.log(`  ${chalk.green('Assistant Messages:'.padEnd(25))} ${chalk.gray(assistantMessages)}`);
+  console.log(`  ${chalk.green('Total Characters:'.padEnd(25))} ${chalk.gray(totalChars.toLocaleString())}`);
+  console.log(`  ${chalk.green('Estimated Tokens:'.padEnd(25))} ${chalk.gray(totalTokensEstimate.toLocaleString())}`);
+  console.log();
+}
+
+/**
+ * Handle fetch command
+ */
+async function handleFetch(args) {
+  if (args.length === 0) {
+    console.log(chalk.yellow('\n⚠️  Please provide a URL'));
+    console.log(chalk.gray('Usage: /fetch <url>\n'));
+    return;
+  }
+
+  const url = args.join(' ');
+  await fetchAndDisplay(url);
+}
+
+/**
+ * Handle memory command
+ */
+async function handleMemoryCommand(args, context) {
+  const subcommand = args[0]?.toLowerCase();
+
+  if (!context.contextManager) {
+    console.log(chalk.yellow('\n⚠️  Context manager not initialized\n'));
+    return;
+  }
+
+  switch (subcommand) {
+    case 'show':
+      context.contextManager.showContextSummary();
+      break;
+
+    case 'refresh':
+      await context.contextManager.loadContextFiles();
+      await context.contextManager.loadCustomMemory();
+      console.log(chalk.green('\n✓ Context refreshed\n'));
+      break;
+
+    case 'add':
+      if (args.length < 2) {
+        console.log(chalk.yellow('\n⚠️  Please provide text to add'));
+        console.log(chalk.gray('Usage: /memory add <text>\n'));
+        return;
+      }
+      const text = args.slice(1).join(' ');
+      context.contextManager.addMemory(text);
+      console.log(chalk.green('\n✓ Memory added\n'));
+      break;
+
+    case 'list':
+      context.contextManager.listContextPaths();
+      break;
+
+    default:
+      console.log(chalk.cyan.bold('\n📝 Memory Commands:\n'));
+      console.log(`  ${chalk.green('/memory show'.padEnd(25))} ${chalk.gray('Display loaded context')}`);
+      console.log(`  ${chalk.green('/memory refresh'.padEnd(25))} ${chalk.gray('Reload all context files')}`);
+      console.log(`  ${chalk.green('/memory add <text>'.padEnd(25))} ${chalk.gray('Add custom memory')}`);
+      console.log(`  ${chalk.green('/memory list'.padEnd(25))} ${chalk.gray('List context file paths')}`);
+      console.log();
+  }
+}
+
+/**
+ * Handle settings command
+ */
+async function handleSettingsCommand(args, context) {
+  const subcommand = args[0]?.toLowerCase();
+
+  if (!context.settingsManager) {
+    console.log(chalk.yellow('\n⚠️  Settings manager not initialized\n'));
+    return;
+  }
+
+  switch (subcommand) {
+    case 'show':
+    case undefined:
+      context.settingsManager.showSettings();
+      break;
+
+    case 'set':
+      if (args.length < 3) {
+        console.log(chalk.yellow('\n⚠️  Usage: /settings set <key> <value> [scope]'));
+        console.log(chalk.gray('Example: /settings set ui.theme dark global\n'));
+        return;
+      }
+      const key = args[1];
+      const value = args[2];
+      const scope = args[3] || 'global';
+      try {
+        const parsedValue = JSON.parse(value);
+        context.settingsManager.set(key, parsedValue, scope);
+        await context.settingsManager.saveSettings(scope);
+      } catch {
+        context.settingsManager.set(key, value, scope);
+        await context.settingsManager.saveSettings(scope);
+      }
+      break;
+
+    case 'reset':
+      const resetScope = args[1] || 'global';
+      await context.settingsManager.resetSettings(resetScope);
+      break;
+
+    case 'export':
+      if (args.length < 2) {
+        console.log(chalk.yellow('\n⚠️  Usage: /settings export <file>\n'));
+        return;
+      }
+      await context.settingsManager.exportSettings(args[1]);
+      break;
+
+    case 'import':
+      if (args.length < 2) {
+        console.log(chalk.yellow('\n⚠️  Usage: /settings import <file> [scope]\n'));
+        return;
+      }
+      await context.settingsManager.importSettings(args[1], args[2] || 'global');
+      break;
+
+    case 'create':
+      const createScope = args[1] || 'global';
+      await createDefaultSettings(createScope);
+      break;
+
+    default:
+      console.log(chalk.cyan.bold('\n⚙️  Settings Commands:\n'));
+      console.log(`  ${chalk.green('/settings show'.padEnd(30))} ${chalk.gray('Show all settings')}`);
+      console.log(`  ${chalk.green('/settings set <key> <val>'.padEnd(30))} ${chalk.gray('Set a setting value')}`);
+      console.log(`  ${chalk.green('/settings reset [scope]'.padEnd(30))} ${chalk.gray('Reset to defaults')}`);
+      console.log(`  ${chalk.green('/settings export <file>'.padEnd(30))} ${chalk.gray('Export settings')}`);
+      console.log(`  ${chalk.green('/settings import <file>'.padEnd(30))} ${chalk.gray('Import settings')}`);
+      console.log(`  ${chalk.green('/settings create [scope]'.padEnd(30))} ${chalk.gray('Create settings file')}`);
+      console.log();
+  }
+}
+
+/**
+ * Handle export command
+ */
+function handleExport(client, args) {
+  const format = args[0]?.toLowerCase() || 'markdown';
+  const filename = args[1] || `session-${Date.now()}.${format === 'json' ? 'json' : 'md'}`;
+
+  exportSession(client.getHistory(), filename, format);
 }
