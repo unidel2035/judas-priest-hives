@@ -138,22 +138,55 @@ export async function startInteractive(config) {
       }).start();
 
       try {
-        // Send to AI with tools and optional images
-        const response = await client.chatWithTools(processedPrompt, {
-          model: config.model,
-          tools,
-          toolHandlers,
-          images: images.length > 0 ? images : undefined,
-        });
+        // Check if streaming is enabled
+        if (config.stream) {
+          spinner.text = 'Starting stream...';
 
-        spinner.stop();
-        spinner.clear(); // Clear spinner artifacts
+          // Send streaming request
+          const response = await client.chat(processedPrompt, {
+            model: config.model,
+            stream: true,
+            images: images.length > 0 ? images : undefined,
+          });
 
-        // Render response
-        const assistantMessage = response.choices[0].message.content;
-        console.log(chalk.blue.bold('\nAssistant > '));
-        renderMarkdown(assistantMessage);
-        console.log();
+          spinner.stop();
+          spinner.clear();
+
+          // Display streaming response
+          console.log(chalk.blue.bold('\nAssistant > '));
+          let fullResponse = '';
+
+          for await (const chunk of response) {
+            if (chunk.choices?.[0]?.delta?.content) {
+              const text = chunk.choices[0].delta.content;
+              process.stdout.write(text);
+              fullResponse += text;
+            }
+          }
+
+          console.log('\n');
+
+          // Add to conversation history
+          client.conversationHistory.push({ role: 'user', content: processedPrompt });
+          client.conversationHistory.push({ role: 'assistant', content: fullResponse });
+        } else {
+          // Non-streaming mode with tools
+          const response = await client.chatWithTools(processedPrompt, {
+            model: config.model,
+            tools,
+            toolHandlers,
+            images: images.length > 0 ? images : undefined,
+          });
+
+          spinner.stop();
+          spinner.clear(); // Clear spinner artifacts
+
+          // Render response
+          const assistantMessage = response.choices[0].message.content;
+          console.log(chalk.blue.bold('\nAssistant > '));
+          renderMarkdown(assistantMessage);
+          console.log();
+        }
       } catch (error) {
         spinner.stop();
         spinner.clear(); // Clear spinner artifacts
