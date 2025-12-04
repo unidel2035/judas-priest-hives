@@ -7,6 +7,7 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, unlinkSync, exists
 import { execSync } from 'child_process';
 import fg from 'fast-glob';
 import { join } from 'path';
+import { fetchUrl, htmlToText } from '../utils/web-fetch.js';
 
 /**
  * Get tool definitions for Polza AI
@@ -106,6 +107,28 @@ export function getTools(yoloMode = false) {
         },
       },
     },
+    {
+      type: 'function',
+      function: {
+        name: 'web_fetch',
+        description: 'Fetch content from a URL',
+        parameters: {
+          type: 'object',
+          properties: {
+            url: {
+              type: 'string',
+              description: 'URL to fetch',
+            },
+            format: {
+              type: 'string',
+              description: 'Response format: "html" (default) or "text" (plain text)',
+              enum: ['html', 'text'],
+            },
+          },
+          required: ['url'],
+        },
+      },
+    },
   ];
 
   // Add shell execution tool only if YOLO mode is enabled
@@ -187,6 +210,27 @@ export function getToolHandlers(yoloMode = false) {
           exists,
           isFile: exists ? stats.isFile() : false,
           isDirectory: exists ? stats.isDirectory() : false,
+        };
+      } catch (error) {
+        return { success: false, error: error.message };
+      }
+    },
+
+    web_fetch: async ({ url, format = 'html' }) => {
+      try {
+        const response = await fetchUrl(url);
+        let content = response.body;
+
+        if (format === 'text') {
+          content = htmlToText(content);
+        }
+
+        return {
+          success: true,
+          content,
+          statusCode: response.statusCode,
+          contentType: response.headers['content-type'],
+          url: response.url,
         };
       } catch (error) {
         return { success: false, error: error.message };

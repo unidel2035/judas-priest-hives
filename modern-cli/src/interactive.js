@@ -12,13 +12,29 @@ import { processPrompt } from './utils/prompt-processor.js';
 import { handleCommand } from './commands/index.js';
 import { createCompleter } from './utils/completer.js';
 import { createEnhancedReadline } from './utils/enhanced-readline.js';
+import { ContextManager } from './utils/context.js';
+import { CustomCommandsManager } from './utils/custom-commands.js';
+import { SettingsManager } from './utils/settings.js';
 
 /**
  * Start interactive session
  */
 export async function startInteractive(config) {
+  // Initialize managers
+  const settingsManager = new SettingsManager();
+  await settingsManager.loadSettings();
+
   // Initialize Polza client
   const client = new PolzaClient(config.apiKey, config.apiBase);
+
+  // Initialize context manager and load context files
+  const contextManager = new ContextManager();
+  await contextManager.loadContextFiles();
+  await contextManager.loadCustomMemory();
+
+  // Initialize custom commands manager
+  const customCommands = new CustomCommandsManager();
+  await customCommands.loadCommands();
 
   // Get tools and handlers
   const tools = getTools(config.yoloMode);
@@ -52,6 +68,17 @@ export async function startInteractive(config) {
   if (config.yoloMode) {
     console.log(chalk.yellow('  ⚠️  YOLO Mode: ') + chalk.gray('Shell commands auto-approved'));
   }
+
+  // Show context and commands status
+  const contextCount = contextManager.contexts.length;
+  const commandsCount = customCommands.commands.size;
+  if (contextCount > 0) {
+    console.log(chalk.cyan(`  📝 Context: `) + chalk.gray(`${contextCount} files loaded`));
+  }
+  if (commandsCount > 0) {
+    console.log(chalk.cyan(`  🔧 Custom Commands: `) + chalk.gray(`${commandsCount} available`));
+  }
+
   console.log(chalk.gray('  💡 Tip: ') + chalk.dim('Press Tab for autocomplete, use /help for commands'));
   console.log();
 
@@ -137,15 +164,36 @@ export async function startInteractive(config) {
 
       // Handle slash commands
       if (userInput.startsWith('/')) {
-        const shouldExit = await handleCommand(userInput, { client, config, rl });
+        const context = {
+          client,
+          config,
+          rl,
+          contextManager,
+          customCommands,
+          settingsManager
+        };
+        const shouldExit = await handleCommand(userInput, context);
         if (shouldExit) {
           break;
         }
-        continue;
+        // Check if a custom command set a prompt to execute
+        if (context.customCommandPrompt) {
+          userInput = context.customCommandPrompt;
+          delete context.customCommandPrompt;
+          // Continue to process this as a normal prompt
+        } else {
+          continue;
+        }
       }
 
       // Process prompt (handle @file, @image and !shell syntax)
-      const { text: processedPrompt, images } = await processPrompt(userInput, config.yoloMode);
+      let { text: processedPrompt, images } = await processPrompt(userInput, config.yoloMode);
+
+      // Add context to the prompt if available
+      const contextText = contextManager.getCombinedContext();
+      if (contextText) {
+        processedPrompt = `${contextText}\n\n---\n\n${processedPrompt}`;
+      }
 
       // Pause readline while showing spinner to avoid conflicts
       rl.pause();
