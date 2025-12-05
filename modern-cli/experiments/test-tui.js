@@ -52,7 +52,7 @@ const conversationLog = grid.set(0, 0, 9, 12, blessed.log, {
 });
 
 // Create input box
-const inputBox = grid.set(9, 0, 2, 12, blessed.textarea, {
+const inputBox = grid.set(9, 0, 2, 12, blessed.textbox, {
   label: ' Input (Press Enter to send test message, Ctrl+C to exit) ',
   border: { type: 'line' },
   style: {

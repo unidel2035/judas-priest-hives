@@ -60,7 +60,7 @@ export async function startTUI(config) {
   });
 
   // Create input box (bottom section, above status)
-  const inputBox = grid.set(9, 0, 2, 12, blessed.textarea, {
+  const inputBox = grid.set(9, 0, 2, 12, blessed.textbox, {
     label: ' Input (Press Enter to send, Ctrl+C to exit TUI) ',
     border: { type: 'line' },
     style: {
