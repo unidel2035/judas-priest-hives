@@ -21,6 +21,7 @@ import { MCPManager } from './utils/mcp.js';
 import { VimMode } from './utils/vim-mode.js';
 import { BangShellMode, parseBangCommand, executeShellCommand } from './utils/bang-shell.js';
 import { HistoryManager } from './lib/history-manager.js';
+import { getInteractivePrompt } from './utils/prompts.js';
 
 /**
  * Start interactive session
@@ -52,6 +53,13 @@ export async function startInteractive(config) {
   const contextManager = new ContextManager();
   await contextManager.loadContextFiles();
   await contextManager.loadCustomMemory();
+
+  // Set system prompt for AI behavior
+  const customMemoryText = contextManager.customMemory
+    .map(m => m.text || m)
+    .join('\n');
+  const systemPrompt = getInteractivePrompt(config.yoloMode, customMemoryText);
+  client.setSystemPrompt(systemPrompt);
 
   // Initialize custom commands manager
   const customCommands = new CustomCommandsManager();
