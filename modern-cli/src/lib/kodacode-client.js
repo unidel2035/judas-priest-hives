@@ -13,6 +13,39 @@ export class KodacodeClient {
     this.githubToken = githubToken;
     this.apiBase = apiBase;
     this.conversationHistory = [];
+    this.systemPrompt = null; // System prompt to prepend to conversations
+  }
+
+  /**
+   * Set the system prompt for the AI
+   * @param {string} prompt - The system prompt text
+   */
+  setSystemPrompt(prompt) {
+    this.systemPrompt = prompt;
+  }
+
+  /**
+   * Get the system prompt
+   * @returns {string|null} - The system prompt or null if not set
+   */
+  getSystemPrompt() {
+    return this.systemPrompt;
+  }
+
+  /**
+   * Build messages array with system prompt if set
+   * @param {Array} messages - The messages array
+   * @returns {Array} - Messages array with system prompt prepended if applicable
+   */
+  _buildMessagesWithSystem(messages) {
+    if (this.systemPrompt && messages.length > 0) {
+      // Check if system message already exists
+      const hasSystemMessage = messages.some(m => m.role === 'system');
+      if (!hasSystemMessage) {
+        return [{ role: 'system', content: this.systemPrompt }, ...messages];
+      }
+    }
+    return messages;
   }
 
   /**
@@ -40,9 +73,11 @@ export class KodacodeClient {
       userMessage = { role: 'user', content: message };
     }
 
+    const messagesWithSystem = this._buildMessagesWithSystem([...this.conversationHistory, userMessage]);
+
     const requestBody = {
       model,
-      messages: [...this.conversationHistory, userMessage],
+      messages: messagesWithSystem,
       stream,
     };
 
@@ -177,9 +212,11 @@ export class KodacodeClient {
 
       // Continue with tool results (no new user message needed)
       // Build request with conversation history
+      const messagesWithSystem = this._buildMessagesWithSystem(this.conversationHistory);
+
       const requestBody = {
         model,
-        messages: this.conversationHistory,
+        messages: messagesWithSystem,
         stream: false,
       };
 

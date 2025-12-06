@@ -7,6 +7,7 @@ import { createClient } from './lib/provider-factory.js';
 import { getTools, getToolHandlers } from './lib/tools.js';
 import { renderMarkdown } from './ui/markdown.js';
 import { processPrompt } from './utils/prompt-processor.js';
+import { getNonInteractivePrompt } from './utils/prompts.js';
 
 /**
  * Run non-interactive mode with a single prompt
@@ -15,6 +16,10 @@ export async function runNonInteractive(prompt, config) {
   try {
     // Initialize AI client using provider factory
     const client = createClient(config);
+
+    // Set system prompt for AI behavior (non-interactive mode)
+    const systemPrompt = getNonInteractivePrompt();
+    client.setSystemPrompt(systemPrompt);
 
     // Get tools and handlers
     const tools = getTools(config.yoloMode);
