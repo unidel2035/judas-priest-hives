@@ -19,10 +19,10 @@ Pazaak is a card game similar to Blackjack:
 - **SVG** - Custom-drawn card graphics
 
 ### Backend
-- **Node.js** - Runtime
+- **Bun** - Runtime with built-in SQLite
 - **Express** - Web framework
 - **Socket.IO** - Real-time multiplayer
-- **SQLite** - User data and statistics storage
+- **bun:sqlite** - Built-in database (no native compilation needed)
 - **bcrypt** - Password hashing
 
 ## Project Structure
@@ -52,16 +52,18 @@ pazaak/
 
 ## Setup
 
-### Backend
+See [SETUP.md](SETUP.md) for detailed setup instructions.
 
+### Quick Start
+
+**Backend:**
 ```bash
 cd backend
-npm install
-npm start
+bun install
+bun start
 ```
 
-### Frontend
-
+**Frontend:**
 ```bash
 cd frontend
 npm install
