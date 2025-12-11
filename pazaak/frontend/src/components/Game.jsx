@@ -9,6 +9,9 @@ export default function Game({ user, onLeaveGame }) {
   const [message, setMessage] = useState('Searching for opponent...');
   const [selectedSideCard, setSelectedSideCard] = useState(null);
   const [showModifierChoice, setShowModifierChoice] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('connected');
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
 
   useEffect(() => {
     // Start searching for match
@@ -65,6 +68,33 @@ export default function Game({ user, onLeaveGame }) {
       console.error('Game error:', data.message);
     });
 
+    // Connection management
+    socket.on('connection_lost', (reason) => {
+      setConnectionStatus('disconnected');
+      setMessage('Connection lost! Attempting to reconnect...');
+    });
+
+    socket.on('reconnecting', (attempt, maxAttempts) => {
+      setConnectionStatus('reconnecting');
+      setReconnectAttempt(attempt);
+      setMessage(`Reconnecting... Attempt ${attempt}/${maxAttempts}`);
+    });
+
+    socket.on('connection_restored', () => {
+      setConnectionStatus('connected');
+      setMessage('Connection restored!');
+
+      // Request current game state after reconnection
+      if (gameState) {
+        socket.getState();
+      }
+    });
+
+    socket.on('connection_failed', () => {
+      setConnectionStatus('failed');
+      setMessage('Connection failed. Please refresh the page.');
+    });
+
     return () => {
       socket.off('searching');
       socket.off('match_found');
@@ -76,8 +106,12 @@ export default function Game({ user, onLeaveGame }) {
       socket.off('match_ended');
       socket.off('player_disconnected');
       socket.off('error');
+      socket.off('connection_lost');
+      socket.off('reconnecting');
+      socket.off('connection_restored');
+      socket.off('connection_failed');
     };
-  }, [user.id, onLeaveGame]);
+  }, [user.id, onLeaveGame, gameState]);
 
   const handleDrawCard = () => {
     if (canTakeAction()) {
@@ -116,12 +150,17 @@ export default function Game({ user, onLeaveGame }) {
            !gameState.gameOver &&
            gameState.currentPlayer === user.id &&
            !gameState.player.standing &&
-           !gameState.player.busted;
+           !gameState.player.busted &&
+           connectionStatus === 'connected';
   };
 
   const handleCancelSearch = () => {
     socket.cancelSearch();
     onLeaveGame();
+  };
+
+  const handleManualReconnect = () => {
+    socket.manualReconnect();
   };
 
   if (searching) {
@@ -155,6 +194,29 @@ export default function Game({ user, onLeaveGame }) {
 
   return (
     <div style={styles.gameContainer}>
+      {/* Connection Status Banner */}
+      {connectionStatus !== 'connected' && (
+        <div style={{
+          ...styles.connectionBanner,
+          ...(connectionStatus === 'failed' ? styles.connectionFailed : styles.connectionReconnecting)
+        }}>
+          {connectionStatus === 'reconnecting' && (
+            <span>🔄 Reconnecting... (Attempt {reconnectAttempt}/5)</span>
+          )}
+          {connectionStatus === 'disconnected' && (
+            <span>⚠️ Connection lost! Reconnecting...</span>
+          )}
+          {connectionStatus === 'failed' && (
+            <div style={styles.connectionFailedContent}>
+              <span>❌ Connection failed</span>
+              <button onClick={handleManualReconnect} style={styles.reconnectButton}>
+                Try Again
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.scoreBoard}>
@@ -201,8 +263,11 @@ export default function Game({ user, onLeaveGame }) {
               <div
                 key={index}
                 onClick={() => handlePlaySideCard(index)}
+                onMouseEnter={() => setHoveredCard(index)}
+                onMouseLeave={() => setHoveredCard(null)}
                 style={{
                   ...styles.clickableCard,
+                  ...(hoveredCard === index && canTakeAction() ? styles.clickableCardHover : {}),
                   opacity: canTakeAction() ? 1 : 0.5,
                   cursor: canTakeAction() ? 'pointer' : 'not-allowed'
                 }}
@@ -412,10 +477,12 @@ const styles = {
     flexWrap: 'wrap'
   },
   clickableCard: {
-    transition: 'transform 0.2s',
-    '&:hover': {
-      transform: 'translateY(-5px)'
-    }
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+  },
+  clickableCardHover: {
+    transform: 'translateY(-5px)',
+    boxShadow: '0 6px 12px rgba(255, 215, 0, 0.4)'
   },
   actions: {
     display: 'flex',
@@ -496,5 +563,42 @@ const styles = {
     background: 'transparent',
     color: '#ffd700',
     cursor: 'pointer'
+  },
+  connectionBanner: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    padding: '12px',
+    textAlign: 'center',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    zIndex: 2000,
+    animation: 'slideDown 0.3s ease-out'
+  },
+  connectionReconnecting: {
+    background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+    color: '#fff'
+  },
+  connectionFailed: {
+    background: 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)',
+    color: '#fff'
+  },
+  connectionFailedContent: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '15px'
+  },
+  reconnectButton: {
+    padding: '8px 16px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    borderRadius: '6px',
+    border: 'none',
+    background: '#fff',
+    color: '#f44336',
+    cursor: 'pointer',
+    transition: 'transform 0.2s'
   }
 };

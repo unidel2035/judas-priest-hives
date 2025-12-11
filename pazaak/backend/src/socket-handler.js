@@ -13,6 +13,18 @@ export class SocketHandler {
   handleConnection(socket) {
     console.log(`Client connected: ${socket.id}`);
 
+    // Set up heartbeat/ping interval
+    const heartbeatInterval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit('ping');
+      }
+    }, 30000); // Every 30 seconds
+
+    socket.on('pong', () => {
+      // Client responded, connection is alive
+      socket.lastPong = Date.now();
+    });
+
     // Authenticate socket connection
     socket.on('authenticate', async (token) => {
       try {
@@ -28,6 +40,7 @@ export class SocketHandler {
 
         console.log(`User authenticated: ${decoded.username} (${decoded.userId})`);
       } catch (error) {
+        console.error(`Authentication error for socket ${socket.id}:`, error.message);
         socket.emit('auth_error', { error: error.message });
       }
     });
@@ -101,6 +114,9 @@ export class SocketHandler {
     socket.on('disconnect', () => {
       console.log(`Client disconnected: ${socket.id}`);
 
+      // Clear heartbeat interval
+      clearInterval(heartbeatInterval);
+
       // Remove from waiting list
       this.waitingPlayers = this.waitingPlayers.filter(p => p.userId !== socket.userId);
 
@@ -140,78 +156,88 @@ export class SocketHandler {
   }
 
   handleDrawCard(socket) {
-    const gameData = this.findUserGame(socket.userId);
-    if (!gameData) {
-      socket.emit('error', { message: 'Not in a game' });
-      return;
-    }
+    try {
+      const gameData = this.findUserGame(socket.userId);
+      if (!gameData) {
+        socket.emit('error', { message: 'Not in a game' });
+        return;
+      }
 
-    const { game, matchId } = gameData;
+      const { game, matchId } = gameData;
 
-    if (game.currentPlayer !== socket.userId) {
-      socket.emit('error', { message: 'Not your turn' });
-      return;
-    }
+      if (game.currentPlayer !== socket.userId) {
+        socket.emit('error', { message: 'Not your turn' });
+        return;
+      }
 
-    const result = game.drawMainCard(socket.userId);
+      const result = game.drawMainCard(socket.userId);
 
-    if (result.error) {
-      socket.emit('error', { message: result.error });
-      return;
-    }
+      if (result.error) {
+        socket.emit('error', { message: result.error });
+        return;
+      }
 
-    // Broadcast to room
-    const roomId = `match_${matchId}`;
-    this.io.to(roomId).emit('card_drawn', {
-      playerId: socket.userId,
-      card: result.card,
-      newScore: result.newScore,
-      busted: result.busted
-    });
+      // Broadcast to room
+      const roomId = `match_${matchId}`;
+      this.io.to(roomId).emit('card_drawn', {
+        playerId: socket.userId,
+        card: result.card,
+        newScore: result.newScore,
+        busted: result.busted
+      });
 
-    // If busted, auto-end round
-    if (result.busted) {
-      setTimeout(() => this.handleStand(socket), 1000);
-    } else {
-      // Switch player
-      game.switchPlayer();
-      this.broadcastGameState(matchId, game);
+      // If busted, auto-end round
+      if (result.busted) {
+        setTimeout(() => this.handleStand(socket), 1000);
+      } else {
+        // Switch player
+        game.switchPlayer();
+        this.broadcastGameState(matchId, game);
+      }
+    } catch (error) {
+      console.error(`Error in handleDrawCard for user ${socket.userId}:`, error);
+      socket.emit('error', { message: 'An error occurred while drawing card' });
     }
   }
 
   handlePlaySideCard(socket, data) {
-    const gameData = this.findUserGame(socket.userId);
-    if (!gameData) {
-      socket.emit('error', { message: 'Not in a game' });
-      return;
+    try {
+      const gameData = this.findUserGame(socket.userId);
+      if (!gameData) {
+        socket.emit('error', { message: 'Not in a game' });
+        return;
+      }
+
+      const { game, matchId } = gameData;
+
+      if (game.currentPlayer !== socket.userId) {
+        socket.emit('error', { message: 'Not your turn' });
+        return;
+      }
+
+      const result = game.playSideCard(socket.userId, data.cardIndex, data.modifier);
+
+      if (result.error) {
+        socket.emit('error', { message: result.error });
+        return;
+      }
+
+      // Broadcast to room
+      const roomId = `match_${matchId}`;
+      this.io.to(roomId).emit('side_card_played', {
+        playerId: socket.userId,
+        card: result.card,
+        valueChange: result.valueChange,
+        newScore: result.newScore,
+        busted: result.busted
+      });
+
+      // Update game state
+      this.broadcastGameState(matchId, game);
+    } catch (error) {
+      console.error(`Error in handlePlaySideCard for user ${socket.userId}:`, error);
+      socket.emit('error', { message: 'An error occurred while playing side card' });
     }
-
-    const { game, matchId } = gameData;
-
-    if (game.currentPlayer !== socket.userId) {
-      socket.emit('error', { message: 'Not your turn' });
-      return;
-    }
-
-    const result = game.playSideCard(socket.userId, data.cardIndex, data.modifier);
-
-    if (result.error) {
-      socket.emit('error', { message: result.error });
-      return;
-    }
-
-    // Broadcast to room
-    const roomId = `match_${matchId}`;
-    this.io.to(roomId).emit('side_card_played', {
-      playerId: socket.userId,
-      card: result.card,
-      valueChange: result.valueChange,
-      newScore: result.newScore,
-      busted: result.busted
-    });
-
-    // Update game state
-    this.broadcastGameState(matchId, game);
   }
 
   handleStand(socket) {
