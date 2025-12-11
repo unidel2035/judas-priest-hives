@@ -6,6 +6,10 @@ class SocketService {
   constructor() {
     this.socket = null;
     this.listeners = new Map();
+    this.authToken = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.isReconnecting = false;
   }
 
   connect(token) {
@@ -13,17 +17,67 @@ class SocketService {
       return;
     }
 
-    this.socket = io(SOCKET_URL);
+    this.authToken = token;
+
+    this.socket = io(SOCKET_URL, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: this.maxReconnectAttempts,
+      timeout: 20000
+    });
 
     this.socket.on('connect', () => {
       console.log('Socket connected');
-      if (token) {
-        this.socket.emit('authenticate', token);
+      this.reconnectAttempts = 0;
+      this.isReconnecting = false;
+
+      if (this.authToken) {
+        this.socket.emit('authenticate', this.authToken);
+      }
+
+      // Notify listeners of connection recovery
+      const callbacks = this.listeners.get('connection_restored') || [];
+      callbacks.forEach(callback => callback());
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+
+      // Notify listeners
+      const callbacks = this.listeners.get('connection_lost') || [];
+      callbacks.forEach(callback => callback(reason));
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      this.reconnectAttempts++;
+
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        const callbacks = this.listeners.get('connection_failed') || [];
+        callbacks.forEach(callback => callback(error));
+      } else {
+        const callbacks = this.listeners.get('reconnecting') || [];
+        callbacks.forEach(callback => callback(this.reconnectAttempts, this.maxReconnectAttempts));
       }
     });
 
-    this.socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    this.socket.on('reconnect', (attemptNumber) => {
+      console.log('Reconnected after', attemptNumber, 'attempts');
+    });
+
+    this.socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log('Reconnection attempt', attemptNumber);
+      this.isReconnecting = true;
+
+      const callbacks = this.listeners.get('reconnecting') || [];
+      callbacks.forEach(callback => callback(attemptNumber, this.maxReconnectAttempts));
+    });
+
+    this.socket.on('reconnect_failed', () => {
+      console.error('Reconnection failed after max attempts');
+      const callbacks = this.listeners.get('connection_failed') || [];
+      callbacks.forEach(callback => callback(new Error('Max reconnection attempts reached')));
     });
 
     // Forward all events to registered listeners
@@ -39,6 +93,26 @@ class SocketService {
       this.socket = null;
     }
     this.listeners.clear();
+    this.authToken = null;
+  }
+
+  isConnected() {
+    return this.socket?.connected || false;
+  }
+
+  getReconnectionStatus() {
+    return {
+      isReconnecting: this.isReconnecting,
+      attempts: this.reconnectAttempts,
+      maxAttempts: this.maxReconnectAttempts
+    };
+  }
+
+  manualReconnect() {
+    if (this.socket && !this.socket.connected) {
+      console.log('Manual reconnection triggered');
+      this.socket.connect();
+    }
   }
 
   on(event, callback) {
